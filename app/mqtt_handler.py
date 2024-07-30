@@ -8,6 +8,8 @@ import os
 
 import paho.mqtt.client as mqtt_client  
 from image_processor import generate_recognized_logo_image  
+from image_processor import generate_recognized_parcel_image  
+from watcher import watcher
 import constants  
 
 logging.basicConfig(level=logging.INFO)  
@@ -19,7 +21,7 @@ class MqttHandler:
         """  
         self.last_id = None  
         self.date_format = None  
-
+        self.obj = None
         self.client = mqtt_client.Client()  
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
         self.client.on_connect = self.on_connect  
@@ -54,6 +56,7 @@ class MqttHandler:
             data = json.loads(payload)  
             event_id = data.get('before', {}).get('id', None)  
             if event_id and ('car' in data.get('before', {}).get('label', None)) or ('truck' in data.get('before', {}).get('label', None)) or ('bus' in data.get('before', {}).get('label', None)):  
+                self.obj = 'car'
                 if event_id != self.last_id:  
                     self.last_id = event_id  
                     logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Car detected!")  
@@ -65,8 +68,24 @@ class MqttHandler:
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
                     logging.info("Processing snapshots.")  
+                    thread = threading.Thread(targimpet=self.process_event, args=(data['after'],))  
+                    thread.start()
+            #Check whether the person is detected.    
+            if event_id and ('person' in data.get('before', {}).get('label', None)):  
+                self.obj = 'person'
+                if event_id != self.last_id:  
+                    self.last_id = event_id  
+                    logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Car detected!")  
+                    self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
+                    logging.info(f"Event_id: { event_id }")  
+                else:
+                    logging.info("Event is processing")  
+                if data['type'] == 'end':  
+                    event_length = data['after']['end_time'] - data['after']['start_time']  
+                    logging.info("Event is finished.(%.1fs)" % event_length)  
+                    logging.info("Processing snapshots.")  
                     thread = threading.Thread(target=self.process_event, args=(data['after'],))  
-                    thread.start()  
+                    thread.start()    
         except json.JSONDecodeError:  
             logging.error("Payload is not in JSON format")  
 
@@ -80,16 +99,34 @@ class MqttHandler:
         event_id = event_data['id']  
         path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-clean.png"  
         if self.wait_for_file_creation(path):  
-            start_time = time.time()  
-            logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
-            logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")  
+            start_time = time.time()
+            if(self.obj=='car'):
+                logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
+                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")  
 
-            start_time = time.time()  
-            event_data = self.fetch_frigate_event_data(event_id)  
-            if event_data:  
-                # self.insert_event_data(event_data, car_name, out_image_path, video_path)  
-                self.insert_event_data(event_data, logo_name, out_image_path, video_path)  
+            if(self.obj =='person'):
+                parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
+                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
+                if(parcel != "Parcel is not detected."):
+                    event_data = self.fetch_frigate_event_data(event_id)  
+                    if event_data:  
+                        self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Parcel is spotted at "+self.date_format)
+                        logging.info(f"Parcel is spotted at {self.date_format}")
+                        logging.info(f"Parcel protection mode turned on.")
 
+                        mode = 1
+                        try:
+                            while(mode):
+                                is_parcel_exist = watcher(self.date_format)
+                                if(is_parcel_exist == 0):
+                                    logging.info("Parcel is taken. Pacel protection model turn off.")
+                                    mode = 0
+                                    take_person_name = extract_parcel_taken_name()
+                                    self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
+                                    logging.info(f"Parcel is taken by {take_person_name} at {self.date_format}")
+                                time.sleep(constants.SLEEP_INTERVAL)  
+                        except KeyboardInterrupt:  
+                            logging.info("Monitoring stopped manually.")
     def fetch_frigate_event_data(self, event_id):  
         """  
         Fetches event data from the Frigate database.  
@@ -114,7 +151,7 @@ class MqttHandler:
             time.sleep(1)  
         return None  
 
-    def insert_event_data(self, event_data, sub_label, out_image_path, video_path):  
+    def insert_logo_event_data(self, event_data, sub_label, out_image_path, video_path):  
         """  
         Inserts event data into the local events database.  
         
@@ -130,67 +167,113 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "INSERT INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
+                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
-                    )  
+                    )
                     events_db_con.commit()  
                     break  
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
 
-    @staticmethod  
-    def setup_database(connection):  
+    def insert_parcel_event_data(self, event_data, out_image_path, video_path, stime):  
         """  
-        Sets up the events database schema.  
+        Inserts event data into the local events database.  
         
         Parameters:  
-            connection: SQLite database connection.  
-        """  
-        cursor = connection.cursor()  
-        cursor.execute("""  
-            CREATE TABLE IF NOT EXISTS event (  
-                id TEXT PRIMARY KEY,   
-                label TEXT,   
-                camera TEXT,   
-                start_time DATETIME,  
-                end_time DATETIME,  
-                thumbnail TEXT,  
-                sub_label TEXT,  
-                snapshot_path TEXT,  
-                video_path TEXT  
-            )  
-        """)  
-        connection.commit()  
-
-    @staticmethod  
-    def wait_for_file_creation(file_path, timeout=10, check_interval=0.5):  
-        """  
-        Waits for a file to be created and become readable.  
-        
-        Parameters:  
-            file_path: Path to the file.  
-            timeout: Maximum time to wait (in seconds).  
-            check_interval: Interval between checks (in seconds).  
-        
-        Returns:  
-            bool: True if the file exists and is readable, False otherwise.  
+            event_data: The event data tuple.  
+            out_image_path: Path to the output image.  
+            video_path: Path to the associated video.  
         """  
         start_time = time.time()  
-        while time.time() - start_time < timeout:  
-            if os.path.exists(file_path):  
-                try:  
-                    with open(file_path, 'rb') as f:  
-                        f.read()  
-                    return True  
-                except IOError:  
-                    pass  
-            time.sleep(check_interval)  
-        logging.warning(f"Timeout reached. File not found or not ready: {file_path}")  
-        return False  
+        while time.time() - start_time < 30:  
+            try:  
+                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                    self.setup_database(events_db_con)  
+                    events_cursor = events_db_con.cursor()  
+                    events_cursor.execute(  
+                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, snapshot_path, video_path, parcel_spotted_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
+                        (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, stime)  
+                    )
+                    events_db_con.commit()  
+                    break  
+            except Exception as e:  
+                logging.error(f"Error inserting event data: {e}")  
+                time.sleep(1)  
 
-    def run(self):  
-        """  
-        Starts the MQTT client loop.  
-        """  
-        self.client.loop_forever()
+def extract_parcel_taken_name(self):
+    '''
+    The most recent sub_label is extracted from the event table on condition that label is person.
+    '''
+    start_time = time.time()  
+    while time.time() - start_time < 30:  
+        try:  
+            with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                self.setup_database(events_db_con)  
+                events_cursor = events_db_con.cursor()  
+                sub_label = events_cursor.execute(  
+                    "SELECT sub_label FROM event WHERE label = 'person' ORDER BY created_at DESC LIMIT 1" 
+                )
+                events_db_con.commit()  
+                break  
+        except Exception as e:  
+            logging.error(f"Error inserting event data: {e}")  
+            time.sleep(1)  
+    return sub_label
+
+@staticmethod  
+def setup_database(connection):  
+    """  
+    Sets up the events database schema.  
+    
+    Parameters:  
+        connection: SQLite database connection.  
+    """  
+    cursor = connection.cursor()  
+    cursor.execute("""  
+        CREATE TABLE IF NOT EXISTS event (  
+            id TEXT PRIMARY KEY,   
+            label TEXT,   
+            camera TEXT,   
+            start_time DATETIME,  
+            end_time DATETIME,  
+            thumbnail TEXT,  
+            sub_label TEXT,  
+            snapshot_path TEXT,  
+            video_path TEXT,
+            parcel_spotted_time TEXT  
+        )  
+    """)  
+    connection.commit()  
+
+@staticmethod  
+def wait_for_file_creation(file_path, timeout=10, check_interval=0.5):  
+    """  
+    Waits for a file to be created and become readable.  
+    
+    Parameters:  
+        file_path: Path to the file.  
+        timeout: Maximum time to wait (in seconds).  
+        check_interval: Interval between checks (in seconds).  
+    
+    Returns:  
+        bool: True if the file exists and is readable, False otherwise.  
+    """  
+    start_time = time.time()  
+    while time.time() - start_time < timeout:  
+        if os.path.exists(file_path):  
+            try:  
+                with open(file_path, 'rb') as f:  
+                    f.read()  
+                return True  
+            except IOError:  
+                pass  
+        time.sleep(check_interval)  
+    logging.warning(f"Timeout reached. File not found or not ready: {file_path}")  
+    return False  
+
+def run(self):  
+    """  
+    Starts the MQTT client loop.  
+    """  
+    self.client.loop_forever()

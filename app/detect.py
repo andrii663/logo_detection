@@ -2,7 +2,8 @@ import sys
 import tensorflow as tf  
 import numpy as np  
 from PIL import Image, ImageDraw, ImageFont  
-from object_detection import ObjectDetection  
+from logo_object_detection import ObjectDetection  
+from parcel_object_detection import ObjectDetection  
 
 import constants
 
@@ -27,7 +28,7 @@ class TFLiteObjectDetection(ObjectDetection):
         return self.interpreter.get_tensor(self.output_index)[0]  
 
 
-def draw_boxes(image, predictions):  
+def draw_logo_boxes(image, predictions):  
     """Draw bounding boxes with labels and confidence scores on the image."""  
     draw = ImageDraw.Draw(image)  
     
@@ -60,15 +61,72 @@ def draw_boxes(image, predictions):
 
 def detect_logo(image_filename):  
     # Load labels  
-    with open(constants.LABELS_FILENAME, 'r') as f:  
+    with open(constants.LOGO_LABELS_FILENAME, 'r') as f:  
         labels = [label.strip() for label in f.readlines()]  
 
-    od_model = TFLiteObjectDetection(constants.MODEL_FILENAME, labels)  
+    od_model = TFLiteObjectDetection(constants.LOGO_MODEL_FILENAME, labels)  
 
     image = Image.open(image_filename)  
     predictions = od_model.predict_image(image)  
     
-
     # Draw boxes on the image  
-    image_with_boxes = draw_boxes(image, predictions)  
+    image_with_boxes = draw_logo_boxes(image, predictions)  
     return image_with_boxes, predictions[0]['tagName']
+
+
+
+# -------------------------------------------------------
+# Below is about parcel detection model.
+
+
+def draw_parcel_boxes(image, predictions):  
+    # Sort predictions by confidence score in ascending order  
+    sorted_predictions = sorted(predictions, key=lambda x: x['probability'])  
+
+    draw = ImageDraw.Draw(image)  
+    try:  
+        # Load a font  
+        font = ImageFont.truetype("arial.ttf", 15)  
+    except IOError:  
+        # If font file does not exist, load default font  
+        font = ImageFont.load_default()  
+        
+    for prediction in sorted_predictions:  
+        box = prediction['boundingBox']  
+        left = int(box['left'] * image.width)  
+        top = int(box['top'] * image.height)  
+        width = int(box['width'] * image.width)  
+        height = int(box['height'] * image.height)  
+        right = left + width  
+        bottom = top + height  
+
+        # Draw the bounding box  
+        draw.rectangle([left, top, right, bottom], outline='red', width=2)  
+
+        # Draw the label and probability  
+        label = f"{prediction['tagName']}: {prediction['probability']:.2f}"  
+        text_size = draw.textbbox((0, 0), label, font=font)  
+        text_width = text_size[2] - text_size[0]  
+        text_height = text_size[3] - text_size[1]  
+        text_background = [left, top - text_height - 5, left + text_width, top]  
+        draw.rectangle(text_background, fill='red')  
+        draw.text((left, top - text_height - 5), label, fill='white', font=font)  
+
+    return image  
+
+def detect_parcel(image):  
+    # Load labels  
+    with open(constants.PARCEL_LABELS_FILENAME, 'r') as f:  
+        labels = [label.strip() for label in f.readlines()]  
+
+    od_model = TFLiteObjectDetection(constants.PARCEL_MODEL_FILENAME, labels)  
+
+    # image = Image.open(image_filename)  
+    predictions = od_model.predict_image(image)  
+    
+    # Draw boxes on the image  
+    image_with_boxes = draw_parcel_boxes(image, predictions)
+    if predictions:
+        return image_with_boxes, predictions[0]['tagName']
+    else:
+        return image_with_boxes, None

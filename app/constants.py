@@ -10,9 +10,15 @@ CSV_DETECTIONS_DIR = "./csv_detections"
 # COCO vehicle class IDs (an example, these need to match your model's classes)  
 VEHICLE_CLASSES = [2, 5, 7]  # IDs for car, bus, truck, etc.  
 
+#the period of watcher
+SLEEP_INTERVAL = 120
+
 #TFLite path
-MODEL_FILENAME = './model/model.tflite'  
-LABELS_FILENAME = './model/labels.txt'  
+LOGO_MODEL_FILENAME = './model/logo_model.tflite'  
+LOGO_LABELS_FILENAME = './model/logo_labels.txt'  
+PARCEL_MODEL_FILENAME = './model/parcel_model.tflite'  
+PARCEL_LABELS_FILENAME = './model/parcel_labels.txt'  
+
 
 # MQTT Constants  
 CLIENT_ID = " "  

@@ -1,3 +1,6 @@
 test.py
 venv
-model/model.tflite
+*.tflite
+img
+.venv
+__pycache__
