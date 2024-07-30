@@ -201,79 +201,79 @@ class MqttHandler:
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
 
-def extract_parcel_taken_name(self):
-    '''
-    The most recent sub_label is extracted from the event table on condition that label is person.
-    '''
-    start_time = time.time()  
-    while time.time() - start_time < 30:  
-        try:  
-            with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
-                self.setup_database(events_db_con)  
-                events_cursor = events_db_con.cursor()  
-                sub_label = events_cursor.execute(  
-                    "SELECT sub_label FROM event WHERE label = 'person' ORDER BY created_at DESC LIMIT 1" 
-                )
-                events_db_con.commit()  
-                break  
-        except Exception as e:  
-            logging.error(f"Error inserting event data: {e}")  
-            time.sleep(1)  
-    return sub_label
-
-@staticmethod  
-def setup_database(connection):  
-    """  
-    Sets up the events database schema.  
-    
-    Parameters:  
-        connection: SQLite database connection.  
-    """  
-    cursor = connection.cursor()  
-    cursor.execute("""  
-        CREATE TABLE IF NOT EXISTS event (  
-            id TEXT PRIMARY KEY,   
-            label TEXT,   
-            camera TEXT,   
-            start_time DATETIME,  
-            end_time DATETIME,  
-            thumbnail TEXT,  
-            sub_label TEXT,  
-            snapshot_path TEXT,  
-            video_path TEXT,
-            parcel_spotted_time TEXT  
-        )  
-    """)  
-    connection.commit()  
-
-@staticmethod  
-def wait_for_file_creation(file_path, timeout=10, check_interval=0.5):  
-    """  
-    Waits for a file to be created and become readable.  
-    
-    Parameters:  
-        file_path: Path to the file.  
-        timeout: Maximum time to wait (in seconds).  
-        check_interval: Interval between checks (in seconds).  
-    
-    Returns:  
-        bool: True if the file exists and is readable, False otherwise.  
-    """  
-    start_time = time.time()  
-    while time.time() - start_time < timeout:  
-        if os.path.exists(file_path):  
+    def extract_parcel_taken_name(self):
+        '''
+        The most recent sub_label is extracted from the event table on condition that label is person.
+        '''
+        start_time = time.time()  
+        while time.time() - start_time < 30:  
             try:  
-                with open(file_path, 'rb') as f:  
-                    f.read()  
-                return True  
-            except IOError:  
-                pass  
-        time.sleep(check_interval)  
-    logging.warning(f"Timeout reached. File not found or not ready: {file_path}")  
-    return False  
+                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                    self.setup_database(events_db_con)  
+                    events_cursor = events_db_con.cursor()  
+                    sub_label = events_cursor.execute(  
+                        "SELECT sub_label FROM event WHERE label = 'person' ORDER BY created_at DESC LIMIT 1" 
+                    )
+                    events_db_con.commit()  
+                    break  
+            except Exception as e:  
+                logging.error(f"Error inserting event data: {e}")  
+                time.sleep(1)  
+        return sub_label
 
-def run(self):  
-    """  
-    Starts the MQTT client loop.  
-    """  
-    self.client.loop_forever()
+    @staticmethod  
+    def setup_database(connection):  
+        """  
+        Sets up the events database schema.  
+        
+        Parameters:  
+            connection: SQLite database connection.  
+        """  
+        cursor = connection.cursor()  
+        cursor.execute("""  
+            CREATE TABLE IF NOT EXISTS event (  
+                id TEXT PRIMARY KEY,   
+                label TEXT,   
+                camera TEXT,   
+                start_time DATETIME,  
+                end_time DATETIME,  
+                thumbnail TEXT,  
+                sub_label TEXT,  
+                snapshot_path TEXT,  
+                video_path TEXT,
+                parcel_spotted_time TEXT  
+            )  
+        """)  
+        connection.commit()  
+
+    @staticmethod  
+    def wait_for_file_creation(file_path, timeout=10, check_interval=0.5):  
+        """  
+        Waits for a file to be created and become readable.  
+        
+        Parameters:  
+            file_path: Path to the file.  
+            timeout: Maximum time to wait (in seconds).  
+            check_interval: Interval between checks (in seconds).  
+        
+        Returns:  
+            bool: True if the file exists and is readable, False otherwise.  
+        """  
+        start_time = time.time()  
+        while time.time() - start_time < timeout:  
+            if os.path.exists(file_path):  
+                try:  
+                    with open(file_path, 'rb') as f:  
+                        f.read()  
+                    return True  
+                except IOError:  
+                    pass  
+            time.sleep(check_interval)  
+        logging.warning(f"Timeout reached. File not found or not ready: {file_path}")  
+        return False  
+
+    def run(self):  
+        """  
+        Starts the MQTT client loop.  
+        """  
+        self.client.loop_forever()
