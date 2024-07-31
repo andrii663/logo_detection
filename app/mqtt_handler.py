@@ -68,7 +68,7 @@ class MqttHandler:
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
                     logging.info("Processing snapshots.")  
-                    thread = threading.Thread(targimpet=self.process_event, args=(data['after'],))  
+                    thread = threading.Thread(target=self.process_event, args=(data['after'],))  
                     thread.start()
             #Check whether the person is detected.    
             if event_id and ('person' in data.get('before', {}).get('label', None)):  
