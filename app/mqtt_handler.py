@@ -104,9 +104,10 @@ class MqttHandler:
                 logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")  
 
-            if(self.obj =='person'):
+            elif(self.obj =='person'):
                 parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
+
                 if(parcel != "Parcel is not detected."):
                     event_data = self.fetch_frigate_event_data(event_id)  
                     if event_data:  
@@ -114,13 +115,13 @@ class MqttHandler:
                         logging.info(f"Parcel is spotted at {self.date_format}")
                         logging.info(f"Parcel protection mode turned on.")
 
-                        mode = 1
+                        mode = True
                         try:
                             while(mode):
                                 is_parcel_exist = watcher(self.date_format)
                                 if(is_parcel_exist == 0):
                                     logging.info("Parcel is taken. Pacel protection model turn off.")
-                                    mode = 0
+                                    mode = False
                                     take_person_name = self.extract_parcel_taken_name()
                                     self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
                                     logging.info(f"Parcel is taken by {take_person_name} at {self.date_format}")
