@@ -1,0 +1,12 @@
+version: '3.8'  
+
+services:  
+  logo_parcel-service:  
+    build: .  
+    ports:
+      - "5055:5055"
+    volumes:  
+      - .:/logo_parcel-server  
+      - /home/admin/storage:/home/admin/storage  
+      - /home/admin/config:/home/admin/config  
+    restart: always
