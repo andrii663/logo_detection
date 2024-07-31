@@ -62,6 +62,9 @@ def generate_recognized_parcel_image(event_data, date_format):
 
     subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 > 0 else int(date_format[11:13]) + 14  
     subfolder_num_str = str(subfolder_num).zfill(2)  
+
+    if int(date_format[11:13]) - 10 < 0:
+        date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)
     video_path = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/{date_format[14:16]}.{date_format[17:19]}.mp4'  
 
     img = cv2.imread(source_img_path)  
