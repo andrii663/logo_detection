@@ -127,6 +127,7 @@ def detect_parcel(image):
     # Draw boxes on the image  
     image_with_boxes = draw_parcel_boxes(image, predictions)
     if predictions:
-        return image_with_boxes, predictions[0]['tagName']
+        if predictions[0]['probability'] > 0.26:
+            return image_with_boxes, predictions[0]['tagName']
     else:
         return image_with_boxes, None
