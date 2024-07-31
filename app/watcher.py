@@ -36,10 +36,13 @@ def watch_video(video_path):
         # Convert the OpenCV frame to a Pillow image  
         pil_image = cv2_to_pil(frame)  
 
-        # if frame_index>200:
-        #     pil_image.show()
-        
-        _, is_parcel_exist = detect_parcel(pil_image)
+        if frame_index>130:
+            pil_image.show()
+        result = detect_parcel(pil_image)  
+        if result is None:  
+            # print("detect_parcel returned None")  
+            continue  # handle this case appropriately 
+        _, is_parcel_exist = result
         # Detect parcel in the Pillow image  
         
         # print(is_parcel_exist)
@@ -55,7 +58,7 @@ def watch_video(video_path):
         
         # # Show the frame 
         # if frame_index>200:
-        #     cv2.imshow('Video', frame)  
+        # cv2.imshow('Video', frame)  
 
         # Break the loop if 'q' is pressed  
         if cv2.waitKey(1) & 0xFF == ord('q'):  
@@ -80,9 +83,9 @@ def watcher(date_format):
 
     # Print matching file paths  
     for file_path in matching_files:  
-       is_parcel_exist = watch_video(file_path)
+       mode = watch_video(file_path)
        break
-    return is_parcel_exist
+    return mode
 
 def find_video_path(video_folder, date_format):
 
