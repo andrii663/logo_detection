@@ -29,8 +29,8 @@ COPY . /license-server
 RUN pip install --no-cache-dir -r requirements.txt  
 
 # Expose the port the app runs on if needed (optional)  
-# Make port 5031 available to the world outside this container  
-EXPOSE 5032  
+# Make port 5055 available to the world outside this container  
+EXPOSE 5055  
 
 # Run the application  
 CMD ["python", "app/brokerv4.py"]
