@@ -37,7 +37,8 @@ def generate_recognized_logo_image(event_data, date_format):
         return "unknown", None, None, None  
 
     out_img, logo_name = detect_logo(source_img_path)
-    out_img.save(out_image_path)  
+    if out_img:
+        out_img.save(out_image_path)  
     if logo_name:  
         return logo_name, out_image_path, video_path  
     else:
