@@ -5,6 +5,11 @@ from PIL import Image, ImageDraw, ImageFont
 from logo_object_detection import ObjectDetection  
 from parcel_object_detection import ObjectDetection  
 
+from ultralytics import YOLO  
+import cv2  
+import numpy as np  
+
+
 import constants
 
 class TFLiteObjectDetection(ObjectDetection):  
@@ -119,6 +124,50 @@ def draw_parcel_boxes(image, predictions):
 
 def detect_parcel(image):  
     # Load labels  
+    if constants.PARCEL_MODEL_FILENAME[:-2] == "pt":
+        
+         # Load YOLO model  
+        parcel_detector = YOLO(constants.PARCEL_MODEL_FILENAME)  
+        
+        # Convert PIL image to OpenCV format  
+        open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)  
+        
+        # Perform detection on the image  
+        results = parcel_detector(open_cv_image)[0]  
+        
+        # Extract the bounding box data  
+        boxes = results.boxes.data.tolist()  
+        
+        # Draw bounding boxes on the image  
+        for box in boxes:  
+            x1, y1, x2, y2, score, class_id = box  
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)  
+            
+            # Draw the rectangle  
+            cv2.rectangle(open_cv_image, (x1, y1), (x2, y2), (0, 255, 0), 2)  
+            
+            # Add text label  
+            label_text = f"Class ID: {int(class_id)}, Conf: {score:.2f}"  
+            cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)  
+        
+        # Convert BGR to RGB for conversion to PIL format  
+        result_img_rgb = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB)  
+        
+        # Convert to PIL Image format  
+        img_with_boxes = Image.fromarray(result_img_rgb)  
+        # Determine if a parcel was detected  
+        detected_label = None  
+        for box in boxes:  
+            x1, y1, x2, y2, score, class_id = box  
+            if score > 0.7 and (x2 - x1) * (y2 - y1) / (results.orig_img.shape[0] * results.orig_img.shape[1]) < 0.3:  
+                detected_label = 'parcel' if class_id == 0 else None  
+                break  
+        
+        return img_with_boxes, detected_label
+
+
+
+
     with open(constants.PARCEL_LABELS_FILENAME, 'r') as f:  
         labels = [label.strip() for label in f.readlines()]  
 
