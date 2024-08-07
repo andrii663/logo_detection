@@ -64,7 +64,8 @@ def generate_recognized_parcel_image(event_data, date_format):
     subfolder_num_str = str(subfolder_num).zfill(2)  
 
     if int(date_format[11:13]) - 10 < 0:
-        date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)
+        # date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)
+        date_format = date_format[:8] + str(int(date_format[8:10]) - 1).zfill(2) + date_format[10:]
     video_path = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/{date_format[14:16]}.{date_format[17:19]}.mp4'  
 
     img = cv2.imread(source_img_path)  
@@ -78,4 +79,4 @@ def generate_recognized_parcel_image(event_data, date_format):
     if parcel:  
         return "Parcel is detected. Parcel protection mode is working...", out_image_path, video_path  
     else:
-        return "Parcel is not detected", out_image_path, video_path
+        return "Parcel is not detected.", out_image_path, video_path

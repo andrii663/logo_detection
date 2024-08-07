@@ -21,7 +21,7 @@ def watch_video(video_path):
         print(f"Error: Could not open video file: {video_path}")  
         return  None
 
-    mode = 1
+    mod = 1
     is_parcel_exist = None
     frame_index = 0  
 
@@ -47,14 +47,14 @@ def watch_video(video_path):
         
         # print(is_parcel_exist)
         if is_parcel_exist == None:  
-            mode = 0  
+            mod = 0  
             break
         # Get the current date and time in the specified format  
         # current_time = datetime.now().strftime(date_format)  
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
 
         # Print the current mode and timestamp to the console (for debugging)  
-        print(f'{current_time} - Mode: {mode}')  
+        print(f'{current_time} - Mode: {mod}')  
         
         # # Show the frame 
         # if frame_index>200:
@@ -65,7 +65,7 @@ def watch_video(video_path):
             break  
     cap.release()  
     cv2.destroyAllWindows()  
-    return mode
+    return mod
 
 def watcher(date_format):
     '''
@@ -81,11 +81,12 @@ def watcher(date_format):
     # Call the function to get matching files  
     matching_files = find_video_path(video_folder, date_format)  
 
+    mod = 1
     # Print matching file paths  
     for file_path in matching_files:  
-       mode = watch_video(file_path)
+       mod = watch_video(file_path)
        break
-    return mode
+    return mod
 
 def find_video_path(video_folder, date_format):
 

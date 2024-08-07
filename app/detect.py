@@ -69,6 +69,9 @@ def detect_logo(image_filename):
     image = Image.open(image_filename)  
     predictions = od_model.predict_image(image)  
     
+    if not predictions:  
+        return None, None  # No predictions were made  
+
     # Draw boxes on the image  
     image_with_boxes = draw_logo_boxes(image, predictions)  
     return image_with_boxes, predictions[0]['tagName']

@@ -75,7 +75,7 @@ class MqttHandler:
                 self.obj = 'person'
                 if event_id != self.last_id:  
                     self.last_id = event_id  
-                    logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Car detected!")  
+                    logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Person detected!")  
                     self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
                     logging.info(f"Event_id: { event_id }")  
                 else:
