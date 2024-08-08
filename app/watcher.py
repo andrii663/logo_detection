@@ -52,9 +52,11 @@ def watch_video(video_path):
         # print(is_parcel_exist)
         if is_parcel_exist == None:  
             count += 1
-            if count>24:
+            if count>12:
                 mod = 0  
                 break
+        else:
+            count = 0
         # Get the current date and time in the specified format  
         # current_time = datetime.now().strftime(date_format)  
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  

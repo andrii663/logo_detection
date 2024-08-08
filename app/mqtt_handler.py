@@ -208,8 +208,7 @@ class MqttHandler:
                 time.sleep(1)  
     def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, takentime):  
         """  
-        Inserts event data into the local events database.  
-        
+       
         Parameters:  
             event_data: The event data tuple.  
             out_image_path: Path to the output image.  
