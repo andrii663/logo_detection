@@ -116,11 +116,11 @@ class MqttHandler:
                         logging.info(f"Parcel protection mode turned on.")
 
                         mode = True
-                        temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S")  # Initialize temp_time  
+                        temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S.%f") 
 
                         try:
                             while(mode):
-                                current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S")  
+                                current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
 
                                 is_parcel_exist = watcher(current_time_str)
                                 if(is_parcel_exist == 0):
