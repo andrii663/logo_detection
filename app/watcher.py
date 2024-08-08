@@ -103,15 +103,17 @@ def find_video_path(video_folder, date_format):
         max_number = int(date_format[17:19])  
         min_number = max_number - 10  
         
+        logging.info(f"prefix")
+
         # List all files in the directory  
         files = os.listdir(video_folder)  
-        logging.info(f"files")
+        logging.info(f"{files}")
         # Filter files based on the specified conditions  
         matching_files = []  
         for file in files:  
             if file.startswith(prefix):  
                 parts = file.split('.')  
-                if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():  
+                if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                     second_num = int(parts[1])  
                     if min_number < second_num < max_number:  
                         matching_files.append(os.path.join(video_folder, file))  
