@@ -166,19 +166,18 @@ def detect_parcel(image):
         return img_with_boxes, detected_label
 
 
+    else:
+        with open(constants.PARCEL_LABELS_FILENAME, 'r') as f:  
+            labels = [label.strip() for label in f.readlines()]  
 
+        od_model = TFLiteObjectDetection(constants.PARCEL_MODEL_FILENAME, labels)  
 
-    with open(constants.PARCEL_LABELS_FILENAME, 'r') as f:  
-        labels = [label.strip() for label in f.readlines()]  
-
-    od_model = TFLiteObjectDetection(constants.PARCEL_MODEL_FILENAME, labels)  
-
-    # image = Image.open(image_filename)  
-    predictions = od_model.predict_image(image)  
-    
-    # Draw boxes on the image  
-    image_with_boxes = draw_parcel_boxes(image, predictions)
-    if predictions:
-        if predictions[0]['probability'] > 0.26 and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.3:
-            return image_with_boxes, predictions[0]['tagName']
-    return image_with_boxes, None
+        # image = Image.open(image_filename)  
+        predictions = od_model.predict_image(image)  
+        
+        # Draw boxes on the image  
+        image_with_boxes = draw_parcel_boxes(image, predictions)
+        if predictions:
+            if predictions[0]['probability'] > 0.26 and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.3:
+                return image_with_boxes, predictions[0]['tagName']
+        return image_with_boxes, None
