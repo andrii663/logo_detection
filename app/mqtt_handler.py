@@ -1,6 +1,6 @@
 import json  
 import time  
-from datetime import datetime  
+from datetime import datetime, timedelta  
 import threading  
 import logging  
 import sqlite3  
@@ -116,9 +116,13 @@ class MqttHandler:
                         logging.info(f"Parcel protection mode turned on.")
 
                         mode = True
+                        temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S")  # Initialize temp_time  
+
                         try:
                             while(mode):
-                                is_parcel_exist = watcher(self.date_format)
+                                current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S")  
+
+                                is_parcel_exist = watcher(current_time_str)
                                 if(is_parcel_exist == 0):
                                     logging.info("Parcel is taken. Pacel protection model turn off.")
                                     mode = False
@@ -126,6 +130,7 @@ class MqttHandler:
                                     self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
                                     logging.info(f"Parcel is taken by {take_person_name} at {self.date_format}")
                                 time.sleep(constants.SLEEP_INTERVAL)  
+                                temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                         except KeyboardInterrupt:  
                             logging.info("Monitoring stopped manually.")
     def fetch_frigate_event_data(self, event_id):  
