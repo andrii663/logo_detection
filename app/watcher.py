@@ -23,7 +23,7 @@ def watch_video(video_path):
     if not cap.isOpened():  
         print(f"Error: Could not open video file: {video_path}")  
         return  None
-
+    print(video_path)
     mod = 1
     is_parcel_exist = None
     frame_index = 0  
@@ -62,7 +62,7 @@ def watch_video(video_path):
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
 
         # Print the current mode and timestamp to the console (for debugging)  
-        print(f'{current_time} - Mode: {mod}')  
+        # print(f'{current_time} - Mode: {mod}')  
         
         # # Show the frame 
         # if frame_index>200:
