@@ -71,7 +71,7 @@ def watcher(date_format):
     '''
     search video clip  whether the parcel is taken.
     '''
-    subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 > 0 else int(date_format[11:13]) + 14  
+    subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 >= 0 else int(date_format[11:13]) + 14  
     subfolder_num_str = str(subfolder_num).zfill(2)  
 
     if int(date_format[11:13]) - 10 < 0:
