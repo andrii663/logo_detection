@@ -105,7 +105,7 @@ def find_video_path(video_folder, date_format):
         
         # List all files in the directory  
         files = os.listdir(video_folder)  
-        
+        logging.info(f"files")
         # Filter files based on the specified conditions  
         matching_files = []  
         for file in files:  
@@ -115,7 +115,7 @@ def find_video_path(video_folder, date_format):
                     second_num = int(parts[1])  
                     if min_number < second_num < max_number:  
                         matching_files.append(os.path.join(video_folder, file))  
-        
+        logging.info(f"matching filename: {matching_files}")
         return matching_files  
 
     except Exception as e:  
