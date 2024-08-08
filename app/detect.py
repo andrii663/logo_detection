@@ -126,8 +126,7 @@ def draw_parcel_boxes(image, predictions):
 
 def detect_parcel(image):  
     # Load labels  
-    if constants.PARCEL_MODEL_FILENAME[:-2] == "pt":
-        
+    if constants.PARCEL_MODEL_FILENAME.endswith(".pt"):         
          # Load YOLO model  
         parcel_detector = YOLO(constants.PARCEL_MODEL_FILENAME)  
         
