@@ -100,10 +100,16 @@ def find_video_path(video_folder, date_format):
         logging.info("Finding the video...")
         # Extract the required components from date_format  
         prefix = date_format[14:16]  
+        prefix_opt = int(date_format[14:16]) - 1  
+        prefix_opt = f"{prefix_opt:02d}" 
+
         max_number = int(date_format[17:19])  
-        min_number = max_number - 10  
-        
-        logging.info(f"prefix")
+        if max_number>=10:
+            min_number = max_number - 10  
+        else:    
+            min_number = max_number + 50
+
+        logging.info(f"prefix:{prefix}")
 
         # List all files in the directory  
         files = os.listdir(video_folder)  
@@ -111,12 +117,29 @@ def find_video_path(video_folder, date_format):
         # Filter files based on the specified conditions  
         matching_files = []  
         for file in files:  
-            if file.startswith(prefix):  
+            if file.startswith(prefix) and max_number>=10:  
+                logging.info("1")
                 parts = file.split('.')  
+                logging.info(f"parts : {parts}")
+
                 if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
-                    second_num = int(parts[1])  
+                    
+                    second_num = int(parts[1])
                     if min_number < second_num < max_number:  
-                        matching_files.append(os.path.join(video_folder, file))  
+                        matching_files.append(os.path.join(video_folder, file)) 
+            else:  
+                if file.startswith(prefix_opt):
+                    logging.info("2")
+
+                    parts = file.split('.')  
+                    logging.info(f"parts : {parts}")
+
+                    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
+                        
+                        second_num = int(parts[1])
+                        if min_number < second_num :  
+                            matching_files.append(os.path.join(video_folder, file)) 
+
         logging.info(f"matching filename: {matching_files}")
         return matching_files  
 
