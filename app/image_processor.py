@@ -69,12 +69,11 @@ def generate_recognized_parcel_image(event_data, date_format):
         date_format = date_format[:8] + str(int(date_format[8:10]) - 1).zfill(2) + date_format[10:]
     video_path = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/{date_format[14:16]}.{date_format[17:19]}.mp4'  
 
-    img = cv2.imread(source_img_path)  
+    image = Image.open(source_img_path)
 
-    if img is None:  
+    if image is None:
         logging.error("Image not loaded. Check the path.")  
         return "unknown", None, None, None  
-    image = Image.open(source_img_path)
     out_img, parcel = detect_parcel(image)
     out_img.save(out_image_path)  
     if parcel:  
