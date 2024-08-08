@@ -95,7 +95,9 @@ def watcher(date_format):
 
 def find_video_path(video_folder, date_format):
 
-    try:  
+    try:
+        #Find the video in the folder
+        logging.info("Finding the video...")
         # Extract the required components from date_format  
         prefix = date_format[14:16]  
         max_number = int(date_format[17:19])  
