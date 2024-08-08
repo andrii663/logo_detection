@@ -12,25 +12,27 @@ import numpy as np
 
 import constants
 
-class TFLiteObjectDetection(ObjectDetection):  
-    """Object Detection class for TensorFlow Lite"""  
-    def __init__(self, model_filename, labels):  
-        super(TFLiteObjectDetection, self).__init__(labels)  
-        self.interpreter = tf.lite.Interpreter(model_path=model_filename)  
-        self.interpreter.allocate_tensors()  
-        self.input_index = self.interpreter.get_input_details()[0]['index']  
-        self.output_index = self.interpreter.get_output_details()[0]['index']  
+if constants.PARCEL_MODEL_FILENAME[:-2] == "pt":
 
-    def predict(self, preprocessed_image):  
-        inputs = np.array(preprocessed_image, dtype=np.float32)[np.newaxis, :, :, (2, 1, 0)]  # RGB -> BGR and add 1 dimension.  
+    class TFLiteObjectDetection(ObjectDetection):  
+        """Object Detection class for TensorFlow Lite"""  
+        def __init__(self, model_filename, labels):  
+            super(TFLiteObjectDetection, self).__init__(labels)  
+            self.interpreter = tf.lite.Interpreter(model_path=model_filename)  
+            self.interpreter.allocate_tensors()  
+            self.input_index = self.interpreter.get_input_details()[0]['index']  
+            self.output_index = self.interpreter.get_output_details()[0]['index']  
 
-        # Resize input tensor and re-allocate the tensors.  
-        self.interpreter.resize_tensor_input(self.input_index, inputs.shape)  
-        self.interpreter.allocate_tensors()  
+        def predict(self, preprocessed_image):  
+            inputs = np.array(preprocessed_image, dtype=np.float32)[np.newaxis, :, :, (2, 1, 0)]  # RGB -> BGR and add 1 dimension.  
 
-        self.interpreter.set_tensor(self.input_index, inputs)  
-        self.interpreter.invoke()  
-        return self.interpreter.get_tensor(self.output_index)[0]  
+            # Resize input tensor and re-allocate the tensors.  
+            self.interpreter.resize_tensor_input(self.input_index, inputs.shape)  
+            self.interpreter.allocate_tensors()  
+
+            self.interpreter.set_tensor(self.input_index, inputs)  
+            self.interpreter.invoke()  
+            return self.interpreter.get_tensor(self.output_index)[0]  
 
 
 def draw_logo_boxes(image, predictions):  
