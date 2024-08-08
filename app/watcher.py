@@ -43,9 +43,9 @@ def watch_video(video_path):
         # if frame_index>130:
         #     pil_image.show()
         result = detect_parcel(pil_image)  
-        if result is None:  
-            # print("detect_parcel returned None")  
-            continue  # handle this case appropriately 
+        # if result is None:  
+        #     # print("detect_parcel returned None")  
+        #     continue  # handle this case appropriately 
         _, is_parcel_exist = result
         # Detect parcel in the Pillow image  
         
@@ -59,7 +59,7 @@ def watch_video(video_path):
             count = 0
         # Get the current date and time in the specified format  
         # current_time = datetime.now().strftime(date_format)  
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+        # current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
 
         # Print the current mode and timestamp to the console (for debugging)  
         # print(f'{current_time} - Mode: {mod}')  

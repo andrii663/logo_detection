@@ -16,7 +16,8 @@ SLEEP_INTERVAL = 120
 #TFLite path
 LOGO_MODEL_FILENAME = './model/logo_model.tflite'  
 LOGO_LABELS_FILENAME = './model/logo_labels.txt'  
-PARCEL_MODEL_FILENAME = './model/parcel_model.tflite'  
+# PARCEL_MODEL_FILENAME = './model/parcel_model.tflite'  
+PARCEL_MODEL_FILENAME = './model/parcel_best.pt'  
 PARCEL_LABELS_FILENAME = './model/parcel_labels.txt'  
 
 
