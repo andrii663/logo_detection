@@ -37,8 +37,8 @@ def watch_video(video_path):
         # Convert the OpenCV frame to a Pillow image  
         pil_image = cv2_to_pil(frame)  
 
-        if frame_index>130:
-            pil_image.show()
+        # if frame_index>130:
+        #     pil_image.show()
         result = detect_parcel(pil_image)  
         if result is None:  
             # print("detect_parcel returned None")  
