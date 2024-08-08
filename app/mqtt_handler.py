@@ -212,9 +212,15 @@ class MqttHandler:
                 with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
-                    sub_label = events_cursor.execute(  
-                        "SELECT sub_label FROM event WHERE label = 'person' ORDER BY created_at DESC LIMIT 1" 
-                    )
+                    # Query to select all sub_labels where label is 'person'  
+                    events_cursor.execute(  
+                        "SELECT sub_label FROM event WHERE label = 'person'"  
+                    )  
+
+                    # Fetch all results  
+                    results = events_cursor.fetchall() 
+                    if results:
+                        sub_label = results[-1][0]
                     events_db_con.commit()  
                     break  
             except Exception as e:  

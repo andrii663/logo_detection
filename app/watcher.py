@@ -5,7 +5,9 @@ from PIL import Image
 import numpy as np  
 import os  
 import logging
+import time
 from detect import detect_parcel
+
 
 def cv2_to_pil(cv2_image):  
     """  
@@ -111,6 +113,7 @@ def find_video_path(video_folder, date_format):
 
         logging.info(f"prefix:{prefix}")
 
+        time.sleep(10)
         # List all files in the directory  
         files = os.listdir(video_folder)  
         logging.info(f"{files}")
@@ -128,7 +131,7 @@ def find_video_path(video_folder, date_format):
                     if min_number < second_num < max_number:  
                         matching_files.append(os.path.join(video_folder, file)) 
             else:  
-                if file.startswith(prefix_opt):
+                if file.startswith(prefix_opt) and max_number<10:
                     logging.info("2")
 
                     parts = file.split('.')  
