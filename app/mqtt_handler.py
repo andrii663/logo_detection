@@ -123,7 +123,7 @@ class MqttHandler:
                                     logging.info("Parcel is taken. Pacel protection model turn off.")
                                     mode = False
                                     take_person_name = self.extract_parcel_taken_name()
-                                    self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
+                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
                                     logging.info(f"Parcel is taken by {take_person_name} at {self.date_format}")
                                 time.sleep(constants.SLEEP_INTERVAL)  
                         except KeyboardInterrupt:  
@@ -195,6 +195,30 @@ class MqttHandler:
                     events_cursor.execute(  
                         "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, snapshot_path, video_path, parcel_spotted_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, stime)  
+                    )
+                    events_db_con.commit()  
+                    break  
+            except Exception as e:  
+                logging.error(f"Error inserting event data: {e}")  
+                time.sleep(1)  
+    def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, takentime):  
+        """  
+        Inserts event data into the local events database.  
+        
+        Parameters:  
+            event_data: The event data tuple.  
+            out_image_path: Path to the output image.  
+            video_path: Path to the associated video.  
+        """  
+        start_time = time.time()  
+        while time.time() - start_time < 30:  
+            try:  
+                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                    self.setup_database(events_db_con)  
+                    events_cursor = events_db_con.cursor()  
+                    events_cursor.execute(  
+                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, snapshot_path, video_path, parcel_taken_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
+                        (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, takentime)  
                     )
                     events_db_con.commit()  
                     break  

@@ -27,7 +27,7 @@ def watch_video(video_path):
     mod = 1
     is_parcel_exist = None
     frame_index = 0  
-
+    count = 0
     while True:  
         # Read a frame from the video  
         ret, frame = cap.read()  
@@ -36,6 +36,7 @@ def watch_video(video_path):
             break  
         print(f"Processing frame {frame_index}")  
         frame_index += 1  
+
         # Convert the OpenCV frame to a Pillow image  
         pil_image = cv2_to_pil(frame)  
 
@@ -50,8 +51,10 @@ def watch_video(video_path):
         
         # print(is_parcel_exist)
         if is_parcel_exist == None:  
-            mod = 0  
-            break
+            count += 1
+            if count>24:
+                mod = 0  
+                break
         # Get the current date and time in the specified format  
         # current_time = datetime.now().strftime(date_format)  
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
