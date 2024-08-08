@@ -37,6 +37,7 @@ This project uses Frigate, MQTT, logo & parcel detection model, and SQLite inclu
     ├── models  
         ├── logo_labels.txt 
         ├── logo_model.tflite
+        ├── parcel_best.pt
         ├── parcel_labels.txt 
         ├── parcel_model.tflite  
     └── Readme.md  
@@ -50,3 +51,4 @@ This project uses Frigate, MQTT, logo & parcel detection model, and SQLite inclu
    Here, logo_labels include the logo classes like DHL, toll, etc. So replace it with new one.
 2. For parcel detection model, please place it in the /model directory.
    Here, parcel_labels may include classes like parcel, box, etc.
+   Current pipeline absords both tflite model and pt model. So if you want to try your tflite model, then copy that model in /models directory and change the PARCEL_MODEL_FILENAME in constants.py.
