@@ -80,8 +80,11 @@ def detect_logo(image_filename):
 
     # Draw boxes on the image  
     image_with_boxes = draw_logo_boxes(image, predictions)  
-    return image_with_boxes, predictions[0]['tagName']
-
+    # return image_with_boxes, predictions[0]['tagName']
+    if predictions:
+        if predictions[0]['probability'] > 0.36 and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.4:
+            return image_with_boxes, predictions[0]['tagName']
+    return image_with_boxes, None
 
 
 # -------------------------------------------------------
