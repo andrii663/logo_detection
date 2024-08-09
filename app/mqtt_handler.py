@@ -199,7 +199,15 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, snapshot_path, video_path, parcel_spotted_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
+                        """  
+                        INSERT INTO event (  
+                            id, label, camera, start_time, end_time, thumbnail,   
+                            snapshot_path, video_path, parcel_spotted_time  
+                        )   
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
+                        ON CONFLICT (id) DO UPDATE SET  
+                            parcel_spotted_time = excluded.parcel_spotted_time  
+                        """,  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, stime)  
                     )
                     events_db_con.commit()  
@@ -253,7 +261,7 @@ class MqttHandler:
                     if results:
                         sub_label = results[-cnt][0]
                         while sub_label == None:
-                            cnt +=1
+                            cnt+=1
                             sub_label= results[-cnt][0]
                     events_db_con.commit()  
                     break  
