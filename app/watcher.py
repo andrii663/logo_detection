@@ -48,7 +48,7 @@ def watch_video(video_path):
         #     continue  # handle this case appropriately 
         _, is_parcel_exist = result
         # Detect parcel in the Pillow image  
-        
+        print(is_parcel_exist)
         # print(is_parcel_exist)
         if is_parcel_exist == None:  
             count += 1
@@ -57,6 +57,9 @@ def watch_video(video_path):
                 break
         else:
             count = 0
+        if frame_index>36:
+            mod = 1
+            break
         # Get the current date and time in the specified format  
         # current_time = datetime.now().strftime(date_format)  
         # current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  

@@ -133,6 +133,7 @@ class MqttHandler:
                                 temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                         except KeyboardInterrupt:  
                             logging.info("Monitoring stopped manually.")
+
     def fetch_frigate_event_data(self, event_id):  
         """  
         Fetches event data from the Frigate database.  
@@ -206,6 +207,7 @@ class MqttHandler:
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
+
     def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, takentime):  
         """  
        
