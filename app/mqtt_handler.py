@@ -249,8 +249,12 @@ class MqttHandler:
 
                     # Fetch all results  
                     results = events_cursor.fetchall() 
+                    cnt = 1
                     if results:
-                        sub_label = results[-1][0]
+                        sub_label = results[-cnt][0]
+                        while sub_label == None:
+                            cnt +=1
+                            sub_label= results[-cnt][0]
                     events_db_con.commit()  
                     break  
             except Exception as e:  
