@@ -125,11 +125,12 @@ class MqttHandler:
 
                                 is_parcel_exist = watcher(current_time_str)
                                 if(is_parcel_exist == 0):
-                                    logging.info("Parcel is taken. Pacel protection model turn off.")
+                                    logging.info("Parcel is taken. Pacel protection mode turn off.")
                                     mode = False
                                     take_person_name = self.extract_parcel_taken_name()
-                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+self.date_format)
-                                    logging.info(f"Parcel is taken by {take_person_name} at {self.date_format}")
+                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+temp_time)
+                                    logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")
+                                    break
                                 time.sleep(constants.SLEEP_INTERVAL)  
                                 temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                         except KeyboardInterrupt:  

@@ -162,7 +162,7 @@ def detect_parcel(image):
         detected_label = None  
         for box in boxes:  
             x1, y1, x2, y2, score, class_id = box  
-            if score > 0.1 and (x2 - x1) * (y2 - y1) / (results.orig_img.shape[0] * results.orig_img.shape[1]) < 0.3:  
+            if score > constants.PARCEL_CONFIDENCE_THRESHOLD and (x2 - x1) * (y2 - y1) / (results.orig_img.shape[0] * results.orig_img.shape[1]) < 0.3:  
                 detected_label = 'parcel' if class_id == 0 else None  
                 break  
         

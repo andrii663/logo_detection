@@ -30,4 +30,4 @@ PORT = 1883
 SUBSCRIBE_TOPIC = "frigate/events"  
 
 # Detection Threshold  
-THRESHOLD = 0.15
+PARCEL_CONFIDENCE_THRESHOLD = 0.8
