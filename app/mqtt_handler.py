@@ -223,8 +223,8 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, snapshot_path, video_path, parcel_taken_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
-                        (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, takentime)  
+                        "UPDATE event SET parcel_taken_time = ? WHERE id = ?",  
+                        (takentime, event_data[0])  
                     )
                     events_db_con.commit()  
                     break  
