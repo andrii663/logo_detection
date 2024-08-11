@@ -125,14 +125,14 @@ def find_video_path(video_folder, date_format):
         time.sleep(10)
         # List all files in the directory  
         files = os.listdir(video_folder)  
-        # logging.info(f"{files}")
+        logging.info(f"{files}")
         # Filter files based on the specified conditions  
         matching_files = []  
         for file in files:  
             if file.startswith(prefix) and max_number>=10:  
-                # logging.info("1")
+                logging.info("1")
                 parts = file.split('.')  
-                # logging.info(f"parts : {parts}")
+                logging.info(f"parts : {parts}")
 
                 if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                     
@@ -141,10 +141,10 @@ def find_video_path(video_folder, date_format):
                         matching_files.append(os.path.join(video_folder, file)) 
             else:  
                 if file.startswith(prefix_opt) and max_number<10:
-                    # logging.info("2")
+                    logging.info("2")
 
                     parts = file.split('.')  
-                    # logging.info(f"parts : {parts}")
+                    logging.info(f"parts : {parts}")
 
                     if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                         
