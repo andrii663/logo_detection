@@ -177,18 +177,27 @@ class MqttHandler:
                 with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
+                    # events_cursor.execute(  
+                    #     """  
+                    #     INSERT INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path)  
+                    #     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
+                    #     ON CONFLICT(id) DO UPDATE SET  
+                    #         sub_label = CASE  
+                    #                         WHEN event.sub_label IS NULL THEN excluded.sub_label  
+                    #                         ELSE event.sub_label || ', ' || excluded.sub_label  
+                    #                     END  
+                    #     """,  
+                    #     (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
+                    # )
                     events_cursor.execute(  
                         """  
                         INSERT INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path)  
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
                         ON CONFLICT(id) DO UPDATE SET  
-                            sub_label = CASE  
-                                            WHEN event.sub_label IS NULL THEN excluded.sub_label  
-                                            ELSE event.sub_label || ', ' || excluded.sub_label  
-                                        END  
+                            sub_label = excluded.sub_label  
                         """,  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
-                    )
+                    )    
                     events_db_con.commit()  
                     break
             except Exception as e:  
