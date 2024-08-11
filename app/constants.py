@@ -31,3 +31,4 @@ SUBSCRIBE_TOPIC = "frigate/events"
 
 # Detection Threshold  
 PARCEL_CONFIDENCE_THRESHOLD = 0.7
+LOGO_CONFIDENCE_THRESHOLD = 0.2

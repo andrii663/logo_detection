@@ -102,8 +102,9 @@ class MqttHandler:
             start_time = time.time()
             if(self.obj=='car'):
                 logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
-                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")  
-
+                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")
+                self.insert_logo_event_data(event_data, logo_name, out_image_path, video_path)  
+                
             elif(self.obj =='person'):
                 parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
@@ -163,7 +164,7 @@ class MqttHandler:
 
     def insert_logo_event_data(self, event_data, sub_label, out_image_path, video_path):  
         """  
-        Inserts event data into the local events database.  
+        Inserts logo event data into the local events database.  
         
         Parameters:  
             event_data: The event data tuple.  
@@ -177,11 +178,19 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "INSERT OR REPLACE INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",  
+                        """  
+                        INSERT INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path)  
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
+                        ON CONFLICT(id) DO UPDATE SET  
+                            sub_label = CASE  
+                                            WHEN event.sub_label IS NULL THEN excluded.sub_label  
+                                            ELSE event.sub_label || ', ' || excluded.sub_label  
+                                        END  
+                        """,  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
                     )
                     events_db_con.commit()  
-                    break  
+                    break
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
