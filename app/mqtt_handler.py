@@ -129,7 +129,7 @@ class MqttHandler:
                                     logging.info("Parcel is taken. Pacel protection mode turn off.")
                                     mode = False
                                     take_person_name = self.extract_parcel_taken_name()
-                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+temp_time)
+                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+str(temp_time))
                                     logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")
                                     break
                                 time.sleep(constants.SLEEP_INTERVAL)  
