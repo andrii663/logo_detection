@@ -119,6 +119,7 @@ class MqttHandler:
                         temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S.%f") 
 
                         temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
+                        time.sleep(constants.SLEEP_INTERVAL)  
                         try:
                             while(mode):
                                 current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
