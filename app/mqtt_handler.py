@@ -12,6 +12,8 @@ from image_processor import generate_recognized_parcel_image
 from watcher import watcher
 import constants  
 
+import traceback
+
 logging.basicConfig(level=logging.INFO)  
 
 class MqttHandler:  
@@ -203,6 +205,7 @@ class MqttHandler:
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 logging.error(f"Exception type: {type(e).__name__}, Args: {e.args}")  
+                logging.error("Traceback: %s", traceback.format_exc())  
                 time.sleep(1)  
 
     def insert_parcel_event_data(self, event_data, out_image_path, video_path, stime):  
