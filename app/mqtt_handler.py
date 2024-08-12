@@ -202,6 +202,7 @@ class MqttHandler:
                     break
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
+                logging.error(f"Exception type: {type(e).__name__}, Args: {e.args}")  
                 time.sleep(1)  
 
     def insert_parcel_event_data(self, event_data, out_image_path, video_path, stime):  
