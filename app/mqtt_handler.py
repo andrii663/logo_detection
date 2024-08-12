@@ -105,7 +105,8 @@ class MqttHandler:
             if(self.obj=='car'):
                 logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")
-                # self.insert_logo_event_data(event_data, logo_name, out_image_path, video_path)  
+                event_data = self.fetch_frigate_event_data(event_id)  
+                self.insert_logo_event_data(event_data, logo_name, out_image_path, video_path)  
                 
             elif(self.obj =='person'):
                 parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
