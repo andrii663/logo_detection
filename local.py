@@ -1,7 +1,7 @@
 import os  
 import subprocess  
 import sys  
-import app.constants as constants
+from app import constants
 
 def create_virtualenv():  
     venv_dir = os.path.join(os.path.dirname(__file__), 'venv')  
