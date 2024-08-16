@@ -1,4 +1,6 @@
-# Directory Constants  
+# Directory Constants
+
+STORAGE_DIR = "/home/admin/storage"
 CLIPS_DIR = "/home/admin/storage/clips"  
 RECORDINGS_DIR = "/home/admin/storage/recordings"  
 FRIGATE_DB_PATH = "/home/admin/config/frigate.db"  

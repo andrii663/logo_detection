@@ -1,6 +1,7 @@
 import os  
 import subprocess  
 import sys  
+import app.constants as constants
 
 def create_virtualenv():  
     venv_dir = os.path.join(os.path.dirname(__file__), 'venv')  
@@ -21,6 +22,14 @@ def modify_permissions(venv_dir):
         subprocess.run(['sudo', 'chmod', '+x', activate_script], check=True)  
     else:  
         raise FileNotFoundError(f"The activation script `{activate_script}` was not found.")  
+
+def set_rw_permissions(path):  
+    if os.path.exists(path):  
+        print(f"Setting read, write, and execute permissions for {path} using sudo...")  
+        subprocess.run(['sudo', 'chmod', '0777', path], check=True)  
+    else:  
+        raise FileNotFoundError(f"The path `{path}` does not exist.")  
+
 
 def activate_and_install_requirements(venv_dir):  
     activate_script = os.path.join(venv_dir, 'bin', 'activate')  
@@ -63,6 +72,8 @@ def run_broker_script(venv_dir):
 def main():  
     venv_dir = create_virtualenv()  
     modify_permissions(venv_dir)  
+    set_rw_permissions(constants.STORAGE_DIR)  
+    set_rw_permissions(constants.EVENTS_DB_PATH)  
     activate_and_install_requirements(venv_dir)  
     check_installed_packages(venv_dir)  
     run_broker_script(venv_dir)  
