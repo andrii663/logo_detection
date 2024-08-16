@@ -23,7 +23,7 @@ def generate_recognized_logo_image(event_data, date_format):
     """  
     event_id = event_data['id']  
     box = event_data['snapshot']['box']  
-    source_img_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}-clean.png'  
+    source_img_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}-bestinsec.png'  
     out_image_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}--logo-rec.jpg'  
 
     subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 > 0 else int(date_format[11:13]) + 14  
@@ -58,7 +58,7 @@ def generate_recognized_parcel_image(event_data, date_format):
     """  
     event_id = event_data['id']  
     box = event_data['snapshot']['box']  
-    source_img_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}-clean.png'  
+    source_img_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}-bestinsec.png'  
     out_image_path = f'{constants.CLIPS_DIR}/GarageCamera-{event_id}-parcel-rec.jpg'  
 
     subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 > 0 else int(date_format[11:13]) + 14  

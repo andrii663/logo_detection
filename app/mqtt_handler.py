@@ -12,6 +12,11 @@ from image_processor import generate_recognized_parcel_image
 from watcher import watcher
 import constants  
 
+import sys
+import requests
+from io import BytesIO
+from PIL import Image
+
 import traceback
 
 logging.basicConfig(level=logging.INFO)  
@@ -23,6 +28,8 @@ class MqttHandler:
         """  
         self.last_id = None  
         self.date_format = None  
+        self.flag_parcel = None
+        self.flag_logo = None
         self.obj = None
         self.client = mqtt_client.Client()  
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
@@ -30,7 +37,7 @@ class MqttHandler:
         self.client.on_message = self.on_message  
 
         self.client.connect(constants.BROKER, constants.PORT, 60)  
-        self.client.subscribe(constants.SUBSCRIBE_TOPIC)  
+        self.client.subscribe(constants.MQTT_TOPIC)  
 
     def on_connect(self, client, userdata, flags, rc):  
         """  
@@ -61,11 +68,35 @@ class MqttHandler:
                 self.obj = 'car'
                 if event_id != self.last_id:  
                     self.last_id = event_id  
+                    self.flag_logo = time.time()
                     logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Car detected!")  
                     self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
                     logging.info(f"Event_id: { event_id }")  
-                else:  
+                elif data["after"]["snapshot"]['frame_time']-data['after']['start_time'] <= 1: 
                     logging.info("Event is processing")  
+                
+                # logging.info(f"flag logo : {self.flag_logo}")
+                # current_time = time.time()
+                # if self.flag_logo == None:
+                #     period = 0
+                # else:
+                #     period = current_time - self.flag
+                # if period > 1:
+                #     self.flag = None
+                #     logging.info("Since 1 secoonds is passed, trying to get the best img until now ...")
+                #     #Save the best snapshot img
+                #     start_time = time.time()
+                #     snapshot_image = self.fetch_best_snapshot(event_id)
+                #     file_path = os.path.join(constants.CLIPS_PATH, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
+                #     self.save_snapshot_image(snapshot_image, file_path)
+                #     current_time = time.time()
+                #     period = current_time - start_time
+                #     logging.info(f"Saved the best snapshot in {period} seconds.")
+
+                #     thread = threading.Thread(target=self.process_event, args=(data['after'],))  
+                #     thread.start()  
+
+
                 if data['type'] == 'end':  
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
@@ -76,13 +107,37 @@ class MqttHandler:
             if event_id and ('person' in data.get('before', {}).get('label', None)):  
                 self.obj = 'person'
                 if event_id != self.last_id:  
-                    self.last_id = event_id  
+                    self.last_id = event_id
+                    self.flag = time.time()  
                     logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Person detected!")  
                     self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
                     logging.info(f"Event_id: { event_id }")  
-                else:
+                elif data["after"]["snapshot"]['frame_time']-data['after']['start_time'] <= 1: 
                     logging.info("Event is processing")  
-                if data['type'] == 'end':  
+
+                logging.info(f"flag parcel : {self.flag}")
+                current_time = time.time()
+                if self.flag_parcel == None:
+                    period = 0
+                else:
+                    period = current_time - self.flag_parcel
+                if period > 1:
+                    self.flag_parcel = None
+                    logging.info("Since 1 secoonds is passed, trying to get the best img until now ...")
+                    #Save the best snapshot img
+                    start_time = time.time()
+                    snapshot_image = self.fetch_best_snapshot(event_id)
+                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
+                    self.save_snapshot_image(snapshot_image, file_path)
+                    current_time = time.time()
+                    period = current_time - start_time
+                    logging.info(f"Saved the best snapshot in {period} seconds.")
+
+                    thread = threading.Thread(target=self.process_event, args=(data['after'],))  
+                    thread.start()  
+
+
+                if data['type'] == 'end' and self.flag_parcel != None:  
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
                     logging.info("Processing snapshots.")  
@@ -99,12 +154,15 @@ class MqttHandler:
             event_data: The event data dictionary.  
         """  
         event_id = event_data['id']  
-        path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-clean.png"  
+        path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-bestinsec.png"  
         if self.wait_for_file_creation(path):  
             start_time = time.time()
             if(self.obj=='car'):
                 logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")
+                
+                
+
                 event_data = self.fetch_frigate_event_data(event_id)  
                 self.insert_logo_event_data(event_data, logo_name, out_image_path, video_path)  
                 
@@ -113,16 +171,54 @@ class MqttHandler:
                 logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
 
                 if(parcel != "Parcel is not detected."):
+
+                    # Create the payload and publish the nofification 
+                    payload = json.dumps({  
+                        "snapshot_path": out_image_path,  
+                        "message": "Parcel was detected."
+                    }) 
+                    # Publish a message to the new topic  
+
+                    result = self.client.publish(constants.MQTT_TOPIC, payload)  
+
+                    # Check if the publish was successful  
+                    status = result.rc  
+                    if status == 0:  
+                        logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                    else:  
+                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
+                    #----------------------------
+                    
+                    start_time = time.time()  
                     event_data = self.fetch_frigate_event_data(event_id)  
                     if event_data:  
-                        self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Parcel is spotted at "+self.date_format)
-                        logging.info(f"Parcel is spotted at {self.date_format}")
+
+                        self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Parcel was spotted at "+self.date_format)
+                        current_time = time.time()
+                        period = start_time - current_time
+                        logging.info(f"Saving parcel spot event took {period} seconds.")
+                        logging.info(f"Parcel was spotted at {self.date_format}")
                         logging.info(f"Parcel protection mode turned on.")
 
                         mode = True
                         temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S.%f") 
 
                         temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
+                         # Create the payload and publish the nofification 
+                        payload = json.dumps({  
+                            "message": "Parcel Watch Activated."
+                        }) 
+                        # Publish a message to the new topic  
+
+                        result = self.client.publish(constants.MQTT_TOPIC, payload)  
+
+                        # Check if the publish was successful  
+                        status = result.rc  
+                        if status == 0:  
+                            logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                        else:  
+                            logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
+                        #----------------------------
                         time.sleep(constants.SLEEP_INTERVAL)  
                         try:
                             while(mode):
@@ -130,11 +226,43 @@ class MqttHandler:
 
                                 is_parcel_exist = watcher(current_time_str)
                                 if(is_parcel_exist == 0):
+
+                                   # Create the payload and publish the nofification 
+                                    payload = json.dumps({  
+                                        "message": "Parcel Taken Detected."
+                                    }) 
+                                    # Publish a message to the new topic  
+
+                                    result = self.client.publish(constants.MQTT_TOPIC, payload)  
+
+                                    # Check if the publish was successful  
+                                    status = result.rc  
+                                    if status == 0:  
+                                        logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                                    else:  
+                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
+                                    #----------------------------     
+
                                     logging.info("Parcel is taken. Pacel protection mode turn off.")
                                     mode = False
                                     take_person_name = self.extract_parcel_taken_name()
-                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Pacel is taken by "+take_person_name+" at "+str(temp_time))
+                                    # Create the payload and publish the nofification 
+                                    payload = json.dumps({  
+                                        "message": f"Parcel Taken {take_person_name}."
+                                    }) 
+                                    # Publish a message to the new topic  
+
+                                    result = self.client.publish(constants.MQTT_TOPIC, payload)  
+
+                                    # Check if the publish was successful  
+                                    status = result.rc  
+                                    if status == 0:  
+                                        logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                                    else:  
+                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
+                                    #----------------------------     
                                     logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")
+                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Parcel is taken by "+take_person_name+" at "+str(temp_time))
                                     break
                                 time.sleep(constants.SLEEP_INTERVAL)  
                                 temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  

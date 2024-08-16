@@ -52,3 +52,4 @@ This project uses Frigate, MQTT, logo & parcel detection model, and SQLite inclu
 2. For parcel detection model, please place it in the /model directory.
    Here, parcel_labels may include classes like parcel, box, etc.
    Current pipeline absords both tflite model and pt model. So if you want to try your tflite model, then copy that model in /models directory and change the PARCEL_MODEL_FILENAME in constants.py.
+3. In constants.py, PARCEL_CONFIDENCE_THRESHOLD,LOGO_CONFIDENCE_THRESHOLD means the confidence score for parcel and logo respectively.

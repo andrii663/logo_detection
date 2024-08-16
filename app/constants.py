@@ -7,6 +7,9 @@ MODEL_LICENSE_PLATE_DETECTOR = "./models/license_plate_detector.pt"
 MODEL_COCO = "./models/yolov8n.pt"  
 LICENSE_PLATES_IMGS_DETECTED_DIR = "./licenses_plates_imgs_detected"  
 CSV_DETECTIONS_DIR = "./csv_detections"  
+CAMERA_NAME = 'GarageCamera'
+
+
 # COCO vehicle class IDs (an example, these need to match your model's classes)  
 VEHICLE_CLASSES = [2, 5, 7]  # IDs for car, bus, truck, etc.  
 
@@ -22,6 +25,8 @@ PARCEL_LABELS_FILENAME = './model/parcel_labels.txt'
 
 
 # MQTT Constants  
+MQTT_TOPIC = "frigate/events/car"  
+FRIGATE_SERVER_ADDRESS = "http://jupyterpi:5000"
 CLIENT_ID = " "  
 USERNAME = "admin"  
 PASSWORD = "1BeachHouse@2023"  
