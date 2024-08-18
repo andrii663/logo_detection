@@ -20,14 +20,13 @@ PARCEL_LABELS_FILENAME = './model/parcel_labels.txt'
 
 
 # MQTT Constants  
-MQTT_TOPIC = "frigate/events/car"  
+MQTT_TOPIC = "frigate/events"  
 FRIGATE_SERVER_ADDRESS = "http://jupyterpi:5000"
 CLIENT_ID = " "  
 USERNAME = "admin"  
 PASSWORD = "1BeachHouse@2023"  
 BROKER = "192.168.0.63"  
 PORT = 1884  
-SUBSCRIBE_TOPIC = "frigate/events"  
 
 # Detection Threshold  
 PARCEL_CONFIDENCE_THRESHOLD = 0.7
