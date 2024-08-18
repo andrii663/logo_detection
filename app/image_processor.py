@@ -28,15 +28,19 @@ def generate_recognized_logo_image(event_data, date_format):
 
     subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 > 0 else int(date_format[11:13]) + 14  
     subfolder_num_str = str(subfolder_num).zfill(2)  
+    # video_path = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/{date_format[14:16]}.{date_format[17:19]}.mp4'  
+    if int(date_format[11:13]) - 10 < 0:
+        # date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)
+        date_format = date_format[:8] + str(int(date_format[8:10]) - 1).zfill(2) + date_format[10:]
     video_path = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/{date_format[14:16]}.{date_format[17:19]}.mp4'  
+    
+    image = Image.open(source_img_path)
 
-    img = cv2.imread(source_img_path)  
-
-    if img is None:  
+    if image is None:  
         logging.error("Image not loaded. Check the path.")  
         return "unknown", None, None, None  
 
-    out_img, logo_name = detect_logo(source_img_path)
+    out_img, logo_name = detect_logo(image)
     if out_img:
         out_img.save(out_image_path)  
     if logo_name:  

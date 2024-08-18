@@ -65,26 +65,78 @@ def draw_logo_boxes(image, predictions):
     return image  
 
 
-def detect_logo(image_filename):  
-    # Load labels  
-    with open(constants.LOGO_LABELS_FILENAME, 'r') as f:  
-        labels = [label.strip() for label in f.readlines()]  
+def detect_logo(image):  
 
-    od_model = TFLiteObjectDetection(constants.LOGO_MODEL_FILENAME, labels)  
+    if constants.LOGO_MODEL_FILENAME.endswith(".pt"):         
+            # Load YOLO model  
+        logo_detector = YOLO(constants.LOGO_MODEL_FILENAME)  
+        
+        # Convert PIL image to OpenCV format  
+        open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)  
+        
+        # Perform detection on the image  
+        results = logo_detector(open_cv_image)[0]  
+        
+        # Extract the bounding box data  
+        boxes = results.boxes.data.tolist()  
+        
+        # Draw bounding boxes on the image  
+        for box in boxes:  
+            x1, y1, x2, y2, score, class_id = box  
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)  
+            
+            # Draw the rectangle  
+            cv2.rectangle(open_cv_image, (x1, y1), (x2, y2), (0, 255, 0), 2)  
+            
+            # Add text label  
+            label_text = f"Class ID: {int(class_id)}, Conf: {score:.2f}"  
+            cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)  
+        
+        # Convert BGR to RGB for conversion to PIL format  
+        result_img_rgb = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB)  
+        
+        # Convert to PIL Image format  
+        img_with_boxes = Image.fromarray(result_img_rgb)  
+        # Determine if a parcel was detected  
+        detected_label = None  
+        for box in boxes:  
+            x1, y1, x2, y2, score, class_id = box  
+            if score > constants.LOGO_CONFIDENCE_THRESHOLD and (x2 - x1) * (y2 - y1) / (results.orig_img.shape[0] * results.orig_img.shape[1]) < 0.3:  
+                if class_id == 0:
+                    detected_label = 'Auspost'
+                if class_id == 1:
+                    detected_label = "courierplease" 
+                if class_id == 2:
+                    detected_label = "DHL"
+                if class_id == 3:
+                    detected_label = "fedex" 
+                if class_id == 4:
+                    detected_label = "startrack" 
+                else:
+                    detected_label = "Toll"
+                break  
+        
+        return img_with_boxes, detected_label
 
-    image = Image.open(image_filename)  
-    predictions = od_model.predict_image(image)  
-    
-    if not predictions:  
-        return None, None  # No predictions were made  
+    else:
+        # Load labels  
+        with open(constants.LOGO_LABELS_FILENAME, 'r') as f:  
+            labels = [label.strip() for label in f.readlines()]  
 
-    # Draw boxes on the image  
-    image_with_boxes = draw_logo_boxes(image, predictions)  
-    # return image_with_boxes, predictions[0]['tagName']
-    if predictions:
-        if predictions[0]['probability'] > constants.LOGO_CONFIDENCE_THRESHOLD and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.4:
-            return image_with_boxes, predictions[0]['tagName']
-    return image_with_boxes, None
+        od_model = TFLiteObjectDetection(constants.LOGO_MODEL_FILENAME, labels)  
+
+        predictions = od_model.predict_image(image)  
+        
+        if not predictions:  
+            return None, None  # No predictions were made  
+
+        # Draw boxes on the image  
+        image_with_boxes = draw_logo_boxes(image, predictions)  
+        # return image_with_boxes, predictions[0]['tagName']
+        if predictions:
+            if predictions[0]['probability'] > constants.LOGO_CONFIDENCE_THRESHOLD and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.4:
+                return image_with_boxes, predictions[0]['tagName']
+        return image_with_boxes, None
 
 
 # -------------------------------------------------------
