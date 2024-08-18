@@ -482,7 +482,7 @@ class MqttHandler:
             print(f"Failed to fetch snapshot. Status code: {response.status_code}")  
             return None  
 
-    def fetch_current_snapshot(self, base_url = constants.FRIGATE_SERVER_ADDRESS):  
+    def fetch_current_snapshot(self, event_id, base_url = constants.FRIGATE_SERVER_ADDRESS):  
         snapshot_url = f"{base_url}/api/{constants.CAMERA_NAME}/latest.jpg[?300]"  
         logging.info(f"Fetching current snapshot from: {snapshot_url}")  
         response = requests.get(snapshot_url)  
