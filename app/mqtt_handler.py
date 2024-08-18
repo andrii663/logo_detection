@@ -21,8 +21,13 @@ from PIL import Image
 
 import traceback
 
-logging.basicConfig(level=logging.INFO)  
+log_handler = logging.StreamHandler(stream=sys.stdout)
 
+if  True:
+    logging.getLogger(None).handlers = [log_handler]
+    logging.getLogger(None).setLevel(logging.INFO)
+    logging.getLogger("elasticsearch").setLevel(logging.ERROR)
+    
 class MqttHandler:  
     def __init__(self):  
         """  
@@ -512,7 +517,7 @@ class MqttHandler:
             #check if there is a parcel
             parcel, out_image_path, video_path = generate_recognized_parcel_image(start_time, self.date_format)
             logging.info(f"Regular check in {start_time} finished in {time.time() - start_time} seconds. {parcel}")
-            
+
             
 
 
