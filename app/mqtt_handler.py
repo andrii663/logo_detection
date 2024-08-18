@@ -11,22 +11,22 @@ from image_processor import generate_recognized_logo_image
 from image_processor import generate_recognized_parcel_image  
 from image_processor import generate_recognized_parcel_image_in_last  
 
-from watcher import watcher
+from watcher import watcher  
 import constants  
 
-import sys
-import requests
-from io import BytesIO
-from PIL import Image
+import sys  
+import requests  
+from io import BytesIO  
+from PIL import Image  
 
-import traceback
+import traceback  
 
-log_handler = logging.StreamHandler(stream=sys.stdout)
+log_handler = logging.StreamHandler(stream=sys.stdout)  
 
-if  True:
-    logging.getLogger(None).handlers = [log_handler]
-    logging.getLogger(None).setLevel(logging.INFO)
-    logging.getLogger("elasticsearch").setLevel(logging.ERROR)
+if  True:  
+    logging.getLogger(None).handlers = [log_handler]  
+    logging.getLogger(None).setLevel(logging.INFO)  
+    logging.getLogger("elasticsearch").setLevel(logging.ERROR)  
 
 class MqttHandler:  
     def __init__(self):  
@@ -35,13 +35,14 @@ class MqttHandler:
         """  
         self.last_id = None  
         self.date_format = None  
-        self.flag_parcel = None
-        self.flag_logo = None
-        self.obj = None
+        self.flag_parcel = None  
+        self.flag_logo = None  
+        self.obj = None  
         self.client = mqtt_client.Client()  
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
         self.client.on_connect = self.on_connect  
         self.client.on_message = self.on_message  
+        self.db_lock = threading.Lock()  # Initialize a lock for database operations  
         
         self.client.connect(constants.BROKER, constants.PORT, 60)  
         self.client.subscribe(constants.MQTT_TOPIC)  
@@ -72,33 +73,33 @@ class MqttHandler:
             data = json.loads(payload)  
             event_id = data.get('before', {}).get('id', None)  
             if event_id and isinstance(data.get('before', {}).get('label'), str) and ('car' in data['before']['label'] or 'truck' in data['before']['label'] or 'bus' in data['before']['label']):  
-                self.obj = 'car'
+                self.obj = 'car'  
                 if event_id != self.last_id:  
                     self.last_id = event_id  
-                    self.flag_logo = time.time()
+                    self.flag_logo = time.time()  
                     logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Car detected!")  
                     self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
                     logging.info(f"Event_id: { event_id }")  
-                elif data["after"]["snapshot"]['frame_time']-data['after']['start_time'] <= 1: 
+                elif data["after"]["snapshot"]['frame_time'] - data['after']['start_time'] <= 1:   
                     logging.info("Event is processing")  
                 
-                logging.info(f"flag logo : {self.flag_logo}")
-                current_time = time.time()
-                if self.flag_logo == None:
-                    period = 0
-                else:
-                    period = current_time - self.flag_logo
-                if period > 1:
-                    self.flag_logo = None
-                    logging.info("Since 1 secoonds is passed, trying to get the best img until now ...")
-                    #Save the best snapshot img
-                    start_time = time.time()
-                    snapshot_image = self.fetch_best_snapshot(event_id)
-                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
-                    self.save_snapshot_image(snapshot_image, file_path)
-                    current_time = time.time()
-                    period = current_time - start_time
-                    logging.info(f"Saved the best snapshot in {period} seconds.")
+                logging.info(f"flag logo : {self.flag_logo}")  
+                current_time = time.time()  
+                if self.flag_logo == None:  
+                    period = 0  
+                else:  
+                    period = current_time - self.flag_logo  
+                if period > 1:  
+                    self.flag_logo = None  
+                    logging.info("Since 1 second has passed, trying to get the best img until now ...")  
+                    # Save the best snapshot img  
+                    start_time = time.time()  
+                    snapshot_image = self.fetch_best_snapshot(event_id)  
+                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")  
+                    self.save_snapshot_image(snapshot_image, file_path)  
+                    current_time = time.time()  
+                    period = current_time - start_time  
+                    logging.info(f"Saved the best snapshot in {period} seconds.")  
 
                     thread = threading.Thread(target=self.process_event, args=(data['after'],))  
                     thread.start()  
@@ -108,55 +109,55 @@ class MqttHandler:
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
                     logging.info("Processing snapshots.")  
-                    self.flag_logo = None
+                    self.flag_logo = None  
                     thread = threading.Thread(target=self.process_event, args=(data['after'],))  
-                    thread.start()
+                    thread.start()  
             
-            #Check whether the person is detected.    
+            # Check whether the person is detected.    
             if event_id and ('person' in data.get('before', {}).get('label', None)):  
-                self.obj = 'person'
+                self.obj = 'person'  
                 if event_id != self.last_id:  
-                    self.last_id = event_id
+                    self.last_id = event_id  
                     self.flag_parcel = time.time()  
                     logging.info(f"{ datetime.fromtimestamp(data['before']['frame_time']) }: Person detected!")  
                     self.date_format = str(datetime.fromtimestamp(data['before']['frame_time']))  
                     logging.info(f"Event_id: { event_id }")  
-                elif data["after"]["snapshot"]['frame_time']-data['after']['start_time'] <= 1: 
+                elif data["after"]["snapshot"]['frame_time'] - data['after']['start_time'] <= 1:   
                     logging.info("Event is processing")  
 
-                logging.info(f"flag parcel : {self.flag_parcel}")
-                current_time = time.time()
-                if self.flag_parcel == None:
-                    period = 0
-                else:
-                    period = current_time - self.flag_parcel
-                if period > 1:
-                    self.flag_parcel = None
-                    logging.info("Since 1 secoonds is passed, trying to get the best img until now ...")
-                    #Save the best snapshot img
-                    start_time = time.time()
-                    snapshot_image = self.fetch_best_snapshot(event_id)
-                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
-                    self.save_snapshot_image(snapshot_image, file_path)
-                    current_time = time.time()
-                    period = current_time - start_time
-                    logging.info(f"Saved the best snapshot in {period} seconds.")
+                logging.info(f"flag parcel : {self.flag_parcel}")  
+                current_time = time.time()  
+                if self.flag_parcel == None:  
+                    period = 0  
+                else:  
+                    period = current_time - self.flag_parcel  
+                if period > 1:  
+                    self.flag_parcel = None  
+                    logging.info("Since 1 second has passed, trying to get the best img until now ...")  
+                    # Save the best snapshot img  
+                    start_time = time.time()  
+                    snapshot_image = self.fetch_best_snapshot(event_id)  
+                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")  
+                    self.save_snapshot_image(snapshot_image, file_path)  
+                    current_time = time.time()  
+                    period = current_time - start_time  
+                    logging.info(f"Saved the best snapshot in {period} seconds.")  
 
                     thread = threading.Thread(target=self.process_event, args=(data['after'],))  
                     thread.start()  
 
                 if data['type'] == 'end':  
 
-                    start_time = time.time()
-                    snapshot_image = self.fetch_current_snapshot(event_id)
-                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-last.png")
-                    self.save_snapshot_image(snapshot_image, file_path)
+                    start_time = time.time()  
+                    snapshot_image = self.fetch_current_snapshot(event_id)  
+                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-last.png")  
+                    self.save_snapshot_image(snapshot_image, file_path)  
 
-                    if self.flag_parcel != None: 
+                    if self.flag_parcel != None:   
                         event_length = data['after']['end_time'] - data['after']['start_time']  
                         logging.info("Event is finished.(%.1fs)" % event_length)  
                         logging.info("Processing snapshots.")  
-                        self.flag_parcel = None
+                        self.flag_parcel = None  
                         thread = threading.Thread(target=self.process_event, args=(data['after'],))  
                         thread.start()    
             
@@ -173,16 +174,16 @@ class MqttHandler:
         event_id = event_data['id']  
         path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-bestinsec.png"  
         if self.wait_for_file_creation(path):  
-            start_time = time.time()
-            if(self.obj=='car'):
+            start_time = time.time()  
+            if self.obj == 'car':  
                 logo_name, out_image_path, video_path = generate_recognized_logo_image(event_data, self.date_format)  
-                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")
+                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. Recognized logo: {logo_name}")  
                 
                 # Create the payload combining both paths  
                 payload = json.dumps({  
                     "snapshot_path": out_image_path,  
-                    "logo_name": f"{logo_name} Truck was spotted.",
-                }) 
+                    "logo_name": f"{logo_name} Truck was spotted.",  
+                })   
                 # Publish a message to the new topic  
 
                 result = self.client.publish(constants.MQTT_TOPIC, payload)  
@@ -192,125 +193,113 @@ class MqttHandler:
                 if status == 0:  
                     logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                 else:  
-                    logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
-                #----------------------------
-                start_time = time.time()
+                    logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+
+                # Insert event data into the database  
+                start_time = time.time()  
                 event_data = self.fetch_frigate_event_data(event_id)  
                 self.insert_logo_event_data(event_data, logo_name, out_image_path, video_path)  
-                current_time = time.time()
-                logging.info(f"Saving car event took {start_time-current_time} seconds.")
-            elif(self.obj =='person'):
-                parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
-                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
-                check = False
-                if(parcel != "Parcel is not detected."):
-                    check = True
-                else:
-                    # check the last scene of the event to see if there is a parcel
+                current_time = time.time()  
+                logging.info(f"Saving car event took {current_time - start_time} seconds.")  
+            elif self.obj == 'person':  
+                parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)  
+                logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")  
+                check = False  
+                if parcel != "Parcel is not detected.":  
+                    check = True  
+                else:  
+                    # check the last scene of the event to see if there is a parcel  
                     path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-last.png"  
                     if self.wait_for_file_creation(path):  
-                        start_time = time.time()
-                        parcel, out_image_path, video_path = generate_recognized_parcel_image_in_last(event_data, self.date_format)
-                        logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
-                        if(parcel != "Parcel is not detected."):
-                            check = True
-                if check:
-                    # Create the payload and publish the nofification 
+                        start_time = time.time()  
+                        parcel, out_image_path, video_path = generate_recognized_parcel_image_in_last(event_data, self.date_format)  
+                        logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")  
+                        if parcel != "Parcel is not detected.":  
+                            check = True  
+
+                if check:  
+                    # Create the payload and publish the notification   
                     payload = json.dumps({  
                         "snapshot_path": out_image_path,  
-                        "message": "Parcel was detected."
-                    }) 
+                        "message": "Parcel was detected."  
+                    })   
                     # Publish a message to the new topic  
-
                     result = self.client.publish(constants.MQTT_TOPIC, payload)  
-
                     # Check if the publish was successful  
                     status = result.rc  
                     if status == 0:  
                         logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                     else:  
-                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
-                    #----------------------------
-                    
+                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+
                     start_time = time.time()  
                     event_data = self.fetch_frigate_event_data(event_id)  
                     if event_data:  
+                        self.insert_parcel_event_data(event_data, out_image_path, video_path, "Parcel was spotted at " + self.date_format)  
+                        current_time = time.time()  
+                        period = current_time - start_time  
+                        logging.info(f"Saving parcel spot event took {period} seconds.")  
+                        logging.info(f"Parcel was spotted at {self.date_format}")  
+                        logging.info(f"Parcel protection mode turned on.")  
 
-                        self.insert_parcel_event_data(event_data, out_image_path, video_path  , "Parcel was spotted at "+ self.date_format)
-                        current_time = time.time()
-                        period = start_time - current_time
-                        logging.info(f"Saving parcel spot event took {period} seconds.")
-                        logging.info(f"Parcel was spotted at {self.date_format}")
-                        logging.info(f"Parcel protection mode turned on.")
-
-                        mode = True
-                        temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S.%f") 
-
+                        mode = True  
+                        temp_time = datetime.strptime(self.date_format, "%Y-%m-%d %H:%M:%S.%f")   
                         temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
-                         # Create the payload and publish the nofification 
+                         # Create the payload and publish the notification   
                         payload = json.dumps({  
-                            "message": "Parcel Watch Activated."
-                        }) 
+                            "message": "Parcel Watch Activated."  
+                        })   
                         # Publish a message to the new topic  
-
                         result = self.client.publish(constants.MQTT_TOPIC, payload)  
-
                         # Check if the publish was successful  
                         status = result.rc  
                         if status == 0:  
                             logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                         else:  
-                            logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
-                        #----------------------------
+                            logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+
                         time.sleep(constants.SLEEP_INTERVAL)  
-                        try:
-                            while(mode):
+                        try:  
+                            while mode:  
                                 current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
 
-                                is_parcel_exist = watcher(current_time_str)
-                                if(is_parcel_exist == 0):
-
-                                   # Create the payload and publish the nofification 
+                                is_parcel_exist = watcher(current_time_str)  
+                                if is_parcel_exist == 0:  
+                                    # Create the payload and publish the notification   
                                     payload = json.dumps({  
-                                        "message": "Parcel Taken Detected."
-                                    }) 
+                                        "message": "Parcel Taken Detected."  
+                                    })   
                                     # Publish a message to the new topic  
-
                                     result = self.client.publish(constants.MQTT_TOPIC, payload)  
-
                                     # Check if the publish was successful  
                                     status = result.rc  
                                     if status == 0:  
                                         logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                                     else:  
-                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
-                                    #----------------------------     
+                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
 
-                                    logging.info("Parcel is taken. Pacel protection mode turn off.")
-                                    mode = False
-                                    take_person_name = self.extract_parcel_taken_name()
-                                    # Create the payload and publish the nofification 
+                                    logging.info("Parcel is taken. Parcel protection mode turning off.")  
+                                    mode = False  
+                                    take_person_name = self.extract_parcel_taken_name()  
+                                    # Create the payload and publish the notification   
                                     payload = json.dumps({  
-                                        "message": f"Parcel Taken {take_person_name}."
-                                    }) 
+                                        "message": f"Parcel Taken by {take_person_name}."  
+                                    })   
                                     # Publish a message to the new topic  
-
                                     result = self.client.publish(constants.MQTT_TOPIC, payload)  
-
                                     # Check if the publish was successful  
                                     status = result.rc  
                                     if status == 0:  
                                         logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                                     else:  
-                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")
-                                    #----------------------------     
-                                    logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")
-                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path  , "Parcel is taken by "+take_person_name+" at "+str(temp_time))
-                                    break
+                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+                                    logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")  
+                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, "Parcel is taken by " + take_person_name + " at " + str(temp_time))  
+                                    break  
                                 time.sleep(constants.SLEEP_INTERVAL)  
                                 temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                         except KeyboardInterrupt:  
-                            logging.info("Monitoring stopped manually.")
+                            logging.info("Monitoring stopped manually.")  
 
     def fetch_frigate_event_data(self, event_id):  
         """  
@@ -325,7 +314,7 @@ class MqttHandler:
         start_time = time.time()  
         while time.time() - start_time < 30:  
             try:  
-                with sqlite3.connect(constants.FRIGATE_DB_PATH) as frigate_db_con:  
+                with self.db_lock, sqlite3.connect(constants.FRIGATE_DB_PATH) as frigate_db_con:  
                     cursor = frigate_db_con.cursor()  
                     cursor.execute("SELECT id, label, camera, start_time, end_time, thumbnail FROM event WHERE id = ?", (event_id,))  
                     event_data = cursor.fetchone()  
@@ -348,7 +337,7 @@ class MqttHandler:
         start_time = time.time()  
         while time.time() - start_time < 30:  
             try:  
-                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                with self.db_lock, sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
@@ -362,18 +351,9 @@ class MqttHandler:
                                         END  
                         """,  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
-                    )
-                    # events_cursor.execute(  
-                    #     """  
-                    #     INSERT INTO event (id, label, camera, start_time, end_time, thumbnail, sub_label, snapshot_path, video_path)  
-                    #     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
-                    #     ON CONFLICT(id) DO UPDATE SET  
-                    #         sub_label = excluded.sub_label  
-                    #     """,  
-                    #     (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], sub_label, out_image_path, video_path)  
-                    # )    
+                    )  
                     events_db_con.commit()  
-                    break
+                    break  
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 logging.error(f"Exception type: {type(e).__name__}, Args: {e.args}")  
@@ -392,39 +372,41 @@ class MqttHandler:
         start_time = time.time()  
         while time.time() - start_time < 30:  
             try:  
-                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                with self.db_lock, sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
                         """  
                         INSERT INTO event (  
-                            id, label, camera, start_time, end_time, thumbnail,   
+                            id, label, camera, start_time, end_time, thumbnail,  
                             snapshot_path, video_path, parcel_spotted_time  
-                        )   
+                        )  
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)  
                         ON CONFLICT (id) DO UPDATE SET  
                             parcel_spotted_time = excluded.parcel_spotted_time  
                         """,  
                         (event_data[0], event_data[1], event_data[2], event_data[3], event_data[4], event_data[5], out_image_path, video_path, stime)  
-                    )
+                    )  
                     events_db_con.commit()  
                     break  
             except Exception as e:  
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
 
-    def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, takentime):  
+    def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, taken_time):  
         """  
-       
+        Inserts taken parcel event data into the local events database.  
+        
         Parameters:  
             event_data: The event data tuple.  
             out_image_path: Path to the output image.  
             video_path: Path to the associated video.  
+            taken_time: Time when the parcel was taken.  
         """  
         start_time = time.time()  
         while time.time() - start_time < 30:  
             try:  
-                with sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
+                with self.db_lock, sqlite3.connect(constants.EVENTS_DB_PATH) as events_db_con:  
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
