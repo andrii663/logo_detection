@@ -27,7 +27,7 @@ if  True:
     logging.getLogger(None).handlers = [log_handler]
     logging.getLogger(None).setLevel(logging.INFO)
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)
-    
+
 class MqttHandler:  
     def __init__(self):  
         """  
@@ -57,6 +57,7 @@ class MqttHandler:
             rc: The connection result.  
         """  
         logging.info(f"Connected with result code { rc }")  
+        print("here in connect")
 
     def on_message(self, client, userdata, msg):  
         """  
@@ -577,3 +578,4 @@ class MqttHandler:
         Starts the MQTT client loop.  
         """  
         self.client.loop_forever()
+        print("start")
