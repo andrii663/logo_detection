@@ -233,6 +233,6 @@ def detect_parcel(image):
         # Draw boxes on the image  
         image_with_boxes = draw_parcel_boxes(image, predictions)
         if predictions:
-            if predictions[0]['probability'] > 0.26 and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.3:
+            if predictions[0]['probability'] > constants.LOGO_CONFIDENCE_THRESHOLD and predictions[0]['boundingBox']['height']*predictions[0]['boundingBox']['width'] < 0.3:
                 return image_with_boxes, predictions[0]['tagName']
         return image_with_boxes, None

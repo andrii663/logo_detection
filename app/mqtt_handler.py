@@ -9,6 +9,8 @@ import os
 import paho.mqtt.client as mqtt_client  
 from image_processor import generate_recognized_logo_image  
 from image_processor import generate_recognized_parcel_image  
+from image_processor import generate_recognized_parcel_image_in_last  
+
 from watcher import watcher
 import constants  
 
@@ -35,7 +37,7 @@ class MqttHandler:
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
         self.client.on_connect = self.on_connect  
         self.client.on_message = self.on_message  
-
+        
         self.client.connect(constants.BROKER, constants.PORT, 60)  
         self.client.subscribe(constants.MQTT_TOPIC)  
 
@@ -152,6 +154,7 @@ class MqttHandler:
                         self.flag_parcel = None
                         thread = threading.Thread(target=self.process_event, args=(data['after'],))  
                         thread.start()    
+            
         except json.JSONDecodeError:  
             logging.error("Payload is not in JSON format")  
 
@@ -202,7 +205,7 @@ class MqttHandler:
                     path = f"{constants.CLIPS_DIR}/GarageCamera-{event_id}-last.png"  
                     if self.wait_for_file_creation(path):  
                         start_time = time.time()
-                        parcel, out_image_path, video_path = generate_recognized_parcel_image(event_data, self.date_format)
+                        parcel, out_image_path, video_path = generate_recognized_parcel_image_in_last(event_data, self.date_format)
                         logging.info(f"Processing event {event_id} finished in {time.time() - start_time} seconds. {parcel}")
                         if(parcel != "Parcel is not detected."):
                             check = True
@@ -496,6 +499,22 @@ class MqttHandler:
             print(f"Snapshot saved at: {file_path}")  
         except Exception as err:  
             print(f"Failed to save image: {err}") 
+
+    def regular_parcel_check(self, state):
+
+        while True:
+            time.sleep(constants.REGULAR_CHECK_INTERVAL)
+            start_time = time.time()
+            snapshot_image = self.fetch_current_snapshot()
+            file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{start_time}-bestinasec.png")
+            self.save_snapshot_image(snapshot_image, file_path)
+
+            #check if there is a parcel
+            parcel, out_image_path, video_path = generate_recognized_parcel_image(start_time, self.date_format)
+            logging.info(f"Regular check in {start_time} finished in {time.time() - start_time} seconds. {parcel}")
+            
+            
+
 
     @staticmethod  
     def setup_database(connection):  

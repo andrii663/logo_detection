@@ -92,7 +92,7 @@ def watcher(date_format):
         # date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)
         date_format = date_format[:8] + str(int(date_format[8:10]) - 1).zfill(2) + date_format[10:]
 
-    video_folder = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/GarageCamera/'  
+    video_folder = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/{constants.CAMERA_NAME}/'  
 
     # Call the function to get matching files  
     matching_files = find_video_path(video_folder, date_format)  
