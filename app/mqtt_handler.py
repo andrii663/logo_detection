@@ -57,7 +57,6 @@ class MqttHandler:
             rc: The connection result.  
         """  
         logging.info(f"Connected with result code { rc }")  
-        print("here in connect")
 
     def on_message(self, client, userdata, msg):  
         """  
@@ -578,4 +577,3 @@ class MqttHandler:
         Starts the MQTT client loop.  
         """  
         self.client.loop_forever()
-        print("start")
