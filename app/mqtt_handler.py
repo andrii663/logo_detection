@@ -483,7 +483,7 @@ class MqttHandler:
             return None  
 
     def fetch_current_snapshot(self, event_id, base_url = constants.FRIGATE_SERVER_ADDRESS):  
-        snapshot_url = f"{base_url}/api/{constants.CAMERA_NAME}/latest.jpg[?300]"  
+        snapshot_url = f"{base_url}/api/{constants.CAMERA_NAME}/latest.jpg"  
         logging.info(f"Fetching current snapshot from: {snapshot_url}")  
         response = requests.get(snapshot_url)  
 
