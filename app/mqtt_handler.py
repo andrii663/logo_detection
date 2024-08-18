@@ -262,7 +262,7 @@ class MqttHandler:
                         time.sleep(constants.SLEEP_INTERVAL)  
                         try:  
                             if self.watch_status == False:
-                                self.wathc_status == True
+                                self.watch_status == True
                                 while mode:  
                                     current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
 
