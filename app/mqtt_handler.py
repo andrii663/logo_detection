@@ -95,7 +95,7 @@ class MqttHandler:
                     #Save the best snapshot img
                     start_time = time.time()
                     snapshot_image = self.fetch_best_snapshot(event_id)
-                    file_path = os.path.join(constants.CLIPS_PATH, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
+                    file_path = os.path.join(constants.CLIPS_DIR, f"{constants.CAMERA_NAME}-{event_id}-bestinsec.png")
                     self.save_snapshot_image(snapshot_image, file_path)
                     current_time = time.time()
                     period = current_time - start_time
