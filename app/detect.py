@@ -90,7 +90,7 @@ def detect_logo(image):
             
             # Add text label  
             label_text = f"Class ID: {int(class_id)}, Conf: {score:.2f}"  
-            cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)  
+            cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)  
         
         # Convert BGR to RGB for conversion to PIL format  
         result_img_rgb = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB)  
@@ -112,7 +112,7 @@ def detect_logo(image):
                     detected_label = "fedex" 
                 if class_id == 4:
                     detected_label = "startrack" 
-                else:
+                if class_id == 5:
                     detected_label = "Toll"
                 break  
         
