@@ -170,59 +170,67 @@ def watch_video(video_path):
     global video_lock  
 
     with video_lock:  # Ensure exclusive access to the video file  
-        cap = cv2.VideoCapture(video_path)  # Open a connection to the video file  
+        cap = cv2.VideoCapture(video_path)  # Use the video file path  
 
-        logging.info("Watching video...")  
+        logging.info("Watching video...")
         if not cap.isOpened():  
-            logging.error(f"Error: Could not open video file: {video_path}")  
-            return None  
-
+            print(f"Error: Could not open video file: {video_path}")  
+            return  None
+        print(video_path)
+        mod = 1
+        is_parcel_exist = None
         frame_index = 0  
-        count = 0  
-        mod = 1  
-        is_parcel_exist = None  
-
+        count = 0
         while True:  
-            try:  
-                ret, frame = cap.read()  # Read a frame from the video  
-                if not ret:  
-                    logging.info("Reached end of video file or encountered an error")  
-                    break  
-
-                logging.info(f"Processing frame {frame_index}")  
-                frame_index += 1  
-
-                if frame is None or frame.size == 0:  
-                    logging.error("Empty or invalid frame encountered")  
-                    continue  
-
-                pil_image = cv2_to_pil(frame)  # Convert the OpenCV frame to a Pillow image  
-
-                result = detect_parcel(pil_image)  
-                if result is None:  
-                    count += 1  
-                    if count > 24:  
-                        mod = 0  
-                        break  
-                else:  
-                    img_with_box, is_parcel_exist = result  
-                    logging.info(f"Parcel detection result: {is_parcel_exist}")  
-                    count = 0  
-
-                if frame_index > 48:  
-                    mod = 1  
-                    break  
-
-                if cv2.waitKey(1) & 0xFF == ord('q'):  
-                    break  
-
-            except Exception as e:  
-                logging.error(f"Error processing video frame: {e}")  
+            # Read a frame from the video  
+            ret, frame = cap.read()  
+            if not ret:  
+                print("Reached end of video file or encountered an error")  
                 break  
+            print(f"Processing frame {frame_index}")  
+            frame_index += 1  
 
+            # Convert the OpenCV frame to a Pillow image  
+            pil_image = cv2_to_pil(frame)  
+
+            # if frame_index>130:
+            #     pil_image.show()
+            result = detect_parcel(pil_image)  
+            # if result is None:  
+            #     # print("detect_parcel returned None")  
+            #     continue  # handle this case appropriately 
+            img_with_box, is_parcel_exist = result
+            # Detect parcel in the Pillow image  
+            print(is_parcel_exist)
+            # print(is_parcel_exist)
+            if is_parcel_exist == None:  
+                count += 1
+                if count>24:
+                    mod = 0  
+                    break
+            else:
+                # img_with_box.show()
+                count = 0
+            if frame_index>48:
+                mod = 1
+                break
+            # Get the current date and time in the specified format  
+            # current_time = datetime.now().strftime(date_format)  
+            # current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+
+            # Print the current mode and timestamp to the console (for debugging)  
+            # print(f'{current_time} - Mode: {mod}')  
+            
+            # # Show the frame 
+            # if frame_index>200:
+            # cv2.imshow('Video', frame)  
+
+            # Break the loop if 'q' is pressed  
+            if cv2.waitKey(1) & 0xFF == ord('q'):  
+                break  
         cap.release()  
         cv2.destroyAllWindows()  
-        return mod  
+        return mod
 
 def watcher(date_format):  
     '''  
