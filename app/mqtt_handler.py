@@ -38,6 +38,7 @@ class MqttHandler:
         self.flag_parcel = None  
         self.flag_logo = None  
         self.obj = None  
+        self.watch_status = False
         self.client = mqtt_client.Client()  
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
         self.client.on_connect = self.on_connect  
@@ -260,44 +261,47 @@ class MqttHandler:
 
                         time.sleep(constants.SLEEP_INTERVAL)  
                         try:  
-                            while mode:  
-                                current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
+                            if self.watch_status == False:
+                                self.wathc_status == True
+                                while mode:  
+                                    current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
 
-                                is_parcel_exist = watcher(current_time_str)  
-                                if is_parcel_exist == 0:  
-                                    # Create the payload and publish the notification   
-                                    payload = json.dumps({  
-                                        "message": "Parcel Taken Detected."  
-                                    })   
-                                    # Publish a message to the new topic  
-                                    result = self.client.publish(constants.MQTT_TOPIC, payload)  
-                                    # Check if the publish was successful  
-                                    status = result.rc  
-                                    if status == 0:  
-                                        logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
-                                    else:  
-                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
 
-                                    logging.info("Parcel is taken. Parcel protection mode turning off.")  
-                                    mode = False  
-                                    take_person_name = self.extract_parcel_taken_name()  
-                                    # Create the payload and publish the notification   
-                                    payload = json.dumps({  
-                                        "message": f"Parcel Taken by {take_person_name}."  
-                                    })   
-                                    # Publish a message to the new topic  
-                                    result = self.client.publish(constants.MQTT_TOPIC, payload)  
-                                    # Check if the publish was successful  
-                                    status = result.rc  
-                                    if status == 0:  
-                                        logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
-                                    else:  
-                                        logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
-                                    logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")  
-                                    self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, "Parcel is taken by " + take_person_name + " at " + str(temp_time))  
-                                    break  
-                                time.sleep(constants.SLEEP_INTERVAL)  
-                                temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
+                                    is_parcel_exist = watcher(current_time_str)  
+                                    if is_parcel_exist == 0:  
+                                        # Create the payload and publish the notification   
+                                        payload = json.dumps({  
+                                            "message": "Parcel Taken Detected."  
+                                        })   
+                                        # Publish a message to the new topic  
+                                        result = self.client.publish(constants.MQTT_TOPIC, payload)  
+                                        # Check if the publish was successful  
+                                        status = result.rc  
+                                        if status == 0:  
+                                            logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                                        else:  
+                                            logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+
+                                        logging.info("Parcel is taken. Parcel protection mode turning off.")  
+                                        mode = False  
+                                        take_person_name = self.extract_parcel_taken_name()  
+                                        # Create the payload and publish the notification   
+                                        payload = json.dumps({  
+                                            "message": f"Parcel Taken by {take_person_name}."  
+                                        })   
+                                        # Publish a message to the new topic  
+                                        result = self.client.publish(constants.MQTT_TOPIC, payload)  
+                                        # Check if the publish was successful  
+                                        status = result.rc  
+                                        if status == 0:  
+                                            logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
+                                        else:  
+                                            logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
+                                        logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")  
+                                        self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, "Parcel is taken by " + take_person_name + " at " + str(temp_time))  
+                                        break  
+                                    time.sleep(constants.SLEEP_INTERVAL)  
+                                    temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                         except KeyboardInterrupt:  
                             logging.info("Monitoring stopped manually.")  
 
