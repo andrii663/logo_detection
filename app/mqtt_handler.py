@@ -71,7 +71,8 @@ class MqttHandler:
         try:  
             data = json.loads(payload)  
             event_id = data.get('before', {}).get('id', None)  
-            if event_id and ('car' in data.get('before', {}).get('label', None)) or ('truck' in data.get('before', {}).get('label', None)) or ('bus' in data.get('before', {}).get('label', None)):  
+            if event_id and isinstance(data.get('before', {}).get('label'), str) and \
+               ('car' in data['before']['label'] or 'truck' in data['before']['label'] or 'bus' in data['before']['label']):  
                 self.obj = 'car'
                 if event_id != self.last_id:  
                     self.last_id = event_id  
