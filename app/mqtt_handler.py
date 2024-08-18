@@ -124,7 +124,7 @@ class MqttHandler:
                 elif data["after"]["snapshot"]['frame_time']-data['after']['start_time'] <= 1: 
                     logging.info("Event is processing")  
 
-                logging.info(f"flag parcel : {self.flag}")
+                logging.info(f"flag parcel : {self.flag_parcel}")
                 current_time = time.time()
                 if self.flag_parcel == None:
                     period = 0
