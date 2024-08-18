@@ -299,6 +299,7 @@ class MqttHandler:
                                             logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
                                         logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")  
                                         self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, "Parcel is taken by " + take_person_name + " at " + str(temp_time))  
+                                        self.watch_status = False
                                         break  
                                     time.sleep(constants.SLEEP_INTERVAL)  
                                     temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
