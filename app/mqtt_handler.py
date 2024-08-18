@@ -105,7 +105,7 @@ class MqttHandler:
                     thread.start()  
 
 
-                if data['type'] == 'end' and self.flag != None:  
+                if data['type'] == 'end' and self.flag_logo != None:  
                     event_length = data['after']['end_time'] - data['after']['start_time']  
                     logging.info("Event is finished.(%.1fs)" % event_length)  
                     logging.info("Processing snapshots.")  
