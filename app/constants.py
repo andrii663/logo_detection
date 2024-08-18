@@ -9,7 +9,7 @@ CAMERA_NAME = 'GarageCamera'
 
 #the period of watcher
 SLEEP_INTERVAL = 120
-REGULAR_CHECK_INTERVAL = 3600
+# REGULAR_CHECK_INTERVAL = 3600
 #TFLite path
 # LOGO_MODEL_FILENAME = './model/logo_model.tflite'  
 LOGO_MODEL_FILENAME = './model/logo_best.pt'  
