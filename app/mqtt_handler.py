@@ -411,7 +411,7 @@ class MqttHandler:
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
                         "UPDATE event SET parcel_taken_time = ? WHERE id = ?",  
-                        (takentime, event_data[0])  
+                        (taken_time, event_data[0])  
                     )
                     events_db_con.commit()  
                     break  
