@@ -8,6 +8,12 @@ import logging
 import time
 from detect import detect_parcel
 
+import threading  
+# Initialize logging  
+logging.basicConfig(level=logging.INFO)  
+
+# Global lock for video file access  
+video_lock = threading.Lock()  
 
 def cv2_to_pil(cv2_image):  
     """  
@@ -161,64 +167,66 @@ def cv2_to_pil(cv2_image):
 
 
 def watch_video(video_path):  
-    cap = cv2.VideoCapture(video_path)  # Open a connection to the video file  
+    global video_lock  
 
-    logging.info("Watching video...")  
-    if not cap.isOpened():  
-        logging.error(f"Error: Could not open video file: {video_path}")  
-        return None  
+    with video_lock:  # Ensure exclusive access to the video file  
+        cap = cv2.VideoCapture(video_path)  # Open a connection to the video file  
 
-    frame_index = 0  
-    count = 0  
-    mod = 1  
-    is_parcel_exist = None  
+        logging.info("Watching video...")  
+        if not cap.isOpened():  
+            logging.error(f"Error: Could not open video file: {video_path}")  
+            return None  
 
-    while True:  
-        try:  
-            ret, frame = cap.read()  # Read a frame from the video  
-            if not ret:  
-                logging.info("Reached end of video file or encountered an error")  
-                break  
+        frame_index = 0  
+        count = 0  
+        mod = 1  
+        is_parcel_exist = None  
 
-            logging.info(f"Processing frame {frame_index}")  
-            frame_index += 1  
-
-            if frame is None or frame.size == 0:  
-                logging.error("Empty or invalid frame encountered")  
-                continue  
-
-            pil_image = cv2_to_pil(frame)  # Convert the OpenCV frame to a Pillow image  
-
-            result = detect_parcel(pil_image)  
-            if result is None:  
-                count += 1  
-                if count > 24:  
-                    mod = 0  
+        while True:  
+            try:  
+                ret, frame = cap.read()  # Read a frame from the video  
+                if not ret:  
+                    logging.info("Reached end of video file or encountered an error")  
                     break  
-            else:  
-                img_with_box, is_parcel_exist = result  
-                logging.info(f"Parcel detection result: {is_parcel_exist}")  
-                count = 0  
 
-            if frame_index > 48:  
-                mod = 1  
+                logging.info(f"Processing frame {frame_index}")  
+                frame_index += 1  
+
+                if frame is None or frame.size == 0:  
+                    logging.error("Empty or invalid frame encountered")  
+                    continue  
+
+                pil_image = cv2_to_pil(frame)  # Convert the OpenCV frame to a Pillow image  
+
+                result = detect_parcel(pil_image)  
+                if result is None:  
+                    count += 1  
+                    if count > 24:  
+                        mod = 0  
+                        break  
+                else:  
+                    img_with_box, is_parcel_exist = result  
+                    logging.info(f"Parcel detection result: {is_parcel_exist}")  
+                    count = 0  
+
+                if frame_index > 48:  
+                    mod = 1  
+                    break  
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):  
+                    break  
+
+            except Exception as e:  
+                logging.error(f"Error processing video frame: {e}")  
                 break  
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):  
-                break  
-
-        except Exception as e:  
-            logging.error(f"Error processing video frame: {e}")  
-            break  
-
-    cap.release()  
-    cv2.destroyAllWindows()  
-    return mod  
-
+        cap.release()  
+        cv2.destroyAllWindows()  
+        return mod  
 
 def watcher(date_format):  
     '''  
-    search video clip  whether the parcel is taken.  
+    Search video clip whether the parcel is taken.  
     '''  
     subfolder_num = int(date_format[11:13]) - 10 if int(date_format[11:13]) - 10 >= 0 else int(date_format[11:13]) + 14  
     subfolder_num_str = str(subfolder_num).zfill(2)  
@@ -226,21 +234,17 @@ def watcher(date_format):
     logging.info("Watcher script is running.")  
 
     if int(date_format[11:13]) - 10 < 0:  
-        # date_format[8:10] = str(int(date_format[8:10])-1).zfill(2)  
         date_format = date_format[:8] + str(int(date_format[8:10]) - 1).zfill(2) + date_format[10:]  
 
     video_folder = f'{constants.RECORDINGS_DIR}/{date_format[:10]}/{subfolder_num_str}/{constants.CAMERA_NAME}/'  
 
-    # Call the function to get matching files  
     matching_files = find_video_path(video_folder, date_format)  
 
     mod = 1  
-    # Print matching file paths  
     for file_path in matching_files:  
-       mod = watch_video(file_path)  
-       break  
+        mod = watch_video(file_path)  
+        break  
     return mod  
-
 
 def find_video_path(video_folder, date_format):  
     try:  
@@ -248,21 +252,20 @@ def find_video_path(video_folder, date_format):
         
         prefix = date_format[14:16]  
         prefix_opt = int(date_format[14:16]) - 1  
-        prefix_opt = f"{prefix_opt:02d}"   
+        prefix_opt = f"{prefix_opt:02d}"  
 
         max_number = int(date_format[17:19])  
         if max_number >= 10:  
             min_number = max_number - 10  
-        else:    
+        else:  
             min_number = max_number + 50  
 
-        logging.info(f"prefix:{prefix}")  
-
+        logging.info(f"prefix: {prefix}")  
         time.sleep(10)  # Consider removing or reducing sleep in production  
         
         files = os.listdir(video_folder)  # List all files in the directory  
         logging.info(f"Files in folder: {files}")  
-        
+
         matching_files = []  # Filter files based on specified conditions  
         for file in files:  
             if file.startswith(prefix) and max_number >= 10:  
@@ -273,7 +276,7 @@ def find_video_path(video_folder, date_format):
                 if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                     second_num = int(parts[1])  
                     if min_number <= second_num < max_number:  
-                        matching_files.append(os.path.join(video_folder, file))   
+                        matching_files.append(os.path.join(video_folder, file))  
             elif file.startswith(prefix_opt) and max_number < 10:  
                 logging.info("Optional prefix match found")  
                 parts = file.split('.')  
@@ -282,7 +285,7 @@ def find_video_path(video_folder, date_format):
                 if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                     second_num = int(parts[1])  
                     if min_number < second_num:  
-                        matching_files.append(os.path.join(video_folder, file))   
+                        matching_files.append(os.path.join(video_folder, file))  
 
         logging.info(f"Matching filenames: {matching_files}")  
         return matching_files  
@@ -290,6 +293,3 @@ def find_video_path(video_folder, date_format):
     except Exception as e:  
         logging.error(f"An error occurred: {e}")  
         return []  
-
-# Initialize logging  
-logging.basicConfig(level=logging.INFO)  
