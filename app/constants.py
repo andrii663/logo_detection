@@ -26,7 +26,7 @@ CLIENT_ID = " "
 USERNAME = "admin"  
 PASSWORD = "1BeachHouse@2023"  
 BROKER = "192.168.0.63"  
-PORT = 1884  
+PORT = 1883  
 
 # Detection Threshold  
 PARCEL_CONFIDENCE_THRESHOLD = 0.7
