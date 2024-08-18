@@ -284,7 +284,7 @@ def find_video_path(video_folder, date_format):
 
                 if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():  
                     second_num = int(parts[1])  
-                    if min_number < second_num:  
+                    if min_number <= second_num:  
                         matching_files.append(os.path.join(video_folder, file))  
 
         logging.info(f"Matching filenames: {matching_files}")  
