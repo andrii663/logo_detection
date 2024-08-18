@@ -88,9 +88,10 @@ def detect_logo(image):
             # Draw the rectangle  
             cv2.rectangle(open_cv_image, (x1, y1), (x2, y2), (0, 255, 0), 2)  
             
-            # Add text label  
-            label_text = f"Class ID: {int(class_id)}, Conf: {score:.2f}"  
-            cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)  
+            if(score>constants.LOGO_CONFIDENCE_THRESHOLD):
+                # Add text label  
+                label_text = f"Conf: {score:.2f}, Class ID: {int(class_id)}, Conf: {score:.2f}"  
+                cv2.putText(open_cv_image, label_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)  
         
         # Convert BGR to RGB for conversion to PIL format  
         result_img_rgb = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB)  
