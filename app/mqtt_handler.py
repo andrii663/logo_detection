@@ -527,6 +527,8 @@ class MqttHandler:
             connection: SQLite database connection.  
         """  
         cursor = connection.cursor()  
+        
+        # Create the table if it does not exist  
         cursor.execute("""  
             CREATE TABLE IF NOT EXISTS event (  
                 id TEXT PRIMARY KEY,   
@@ -537,10 +539,21 @@ class MqttHandler:
                 thumbnail TEXT,  
                 sub_label TEXT,  
                 snapshot_path TEXT,  
-                video_path TEXT,
-                parcel_spotted_time TEXT  
+                video_path TEXT  
             )  
         """)  
+        
+        # Check if 'parcel_spotted_time' and 'parcel_taken_time' columns exist  
+        cursor.execute("PRAGMA table_info(event)")  
+        existing_columns = [info[1] for info in cursor.fetchall()]  
+        
+        if 'parcel_spotted_time' not in existing_columns:  
+            cursor.execute("ALTER TABLE event ADD COLUMN parcel_spotted_time TEXT")  
+            
+        if 'parcel_taken_time' not in existing_columns:  
+            cursor.execute("ALTER TABLE event ADD COLUMN parcel_taken_time TEXT")  
+        
+        # Commit the changes  
         connection.commit()  
 
     @staticmethod  
