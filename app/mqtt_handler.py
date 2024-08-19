@@ -29,6 +29,8 @@ if  True:
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)  
 
 class MqttHandler:  
+    watch_status = False
+
     def __init__(self):  
         """  
         Initializes the MQTT Handler with client settings.  
@@ -38,7 +40,6 @@ class MqttHandler:
         self.flag_parcel = None  
         self.flag_logo = None  
         self.obj = None  
-        self.watch_status = False
         self.client = mqtt_client.Client()  
         self.client.username_pw_set(constants.USERNAME, constants.PASSWORD)  
         self.client.on_connect = self.on_connect  
@@ -236,7 +237,10 @@ class MqttHandler:
                     start_time = time.time()  
                     event_data = self.fetch_frigate_event_data(event_id)  
                     if event_data:  
-                        self.insert_parcel_event_data(event_data, out_image_path, video_path, "Parcel was spotted at " + self.date_format)  
+                        temp_time = self.date_format
+                        formatted_time = temp_time.strftime("%d%m%Y %I:%M%p").lower()  
+
+                        self.insert_parcel_event_data(event_data, out_image_path, video_path, formatted_time)  
                         current_time = time.time()  
                         period = current_time - start_time  
                         logging.info(f"Saving parcel spot event took {period} seconds.")  
@@ -261,8 +265,8 @@ class MqttHandler:
 
                         time.sleep(constants.SLEEP_INTERVAL)  
                         try:  
-                            if self.watch_status == False:
-                                self.watch_status == True
+                            if MqttHandler.watch_status == False:
+                                MqttHandler.watch_status == True
                                 while mode:  
                                     current_time_str = temp_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Formatting to include milliseconds if present  
 
@@ -297,9 +301,10 @@ class MqttHandler:
                                             logging.info(f"Sent `{payload}` to topic `{constants.MQTT_TOPIC}`")  
                                         else:  
                                             logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
-                                        logging.info(f"Parcel is taken by {take_person_name} at {temp_time}")  
-                                        self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, "Parcel is taken by " + take_person_name + " at " + str(temp_time))  
-                                        self.watch_status = False
+                                        formatted_time = temp_time.strftime("%d%m%Y %I:%M%p").lower()  
+                                        logging.info(f"Parcel is taken by {take_person_name} at {formatted_time}")  
+                                        self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, take_person_name + " at " + str(formatted_time))  
+                                        MqttHandler.watch_status = False
                                         break  
                                     time.sleep(constants.SLEEP_INTERVAL)  
                                     temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
