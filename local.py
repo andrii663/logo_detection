@@ -25,10 +25,13 @@ def modify_permissions(venv_dir):
 
 def set_rw_permissions(path):  
     if os.path.exists(path):  
-        print(f"Setting read, write, and execute permissions for {path} using sudo...")  
-        subprocess.run(['sudo', 'chmod', '0777', path], check=True)  
+        print(f"Setting read, write, and execute permissions for {path} and its contents using sudo...")  
+        # Recursively change ownership to admin:admin  
+        subprocess.run(['sudo', 'chown', '-R', 'admin:admin', path], check=True)  
+        # Recursively change permissions to 0777  
+        subprocess.run(['sudo', 'chmod', '-R', '0777', path], check=True)  
     else:  
-        raise FileNotFoundError(f"The path `{path}` does not exist.")  
+        raise FileNotFoundError(f"The path `{path}` does not exist.")   
 
 
 def activate_and_install_requirements(venv_dir):  
