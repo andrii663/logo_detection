@@ -314,7 +314,7 @@ class MqttHandler:
                                         time.sleep(constants.SLEEP_INTERVAL)  
                                         temp_time += timedelta(seconds=constants.SLEEP_INTERVAL)  # Increment temp_time  
                             except KeyboardInterrupt:  
-                            logging.info("Monitoring stopped manually.")  
+                                logging.info("Monitoring stopped manually.")  
 
     def fetch_frigate_event_data(self, event_id):  
         """  
