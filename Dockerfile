@@ -29,10 +29,10 @@ COPY . /logo-server
 RUN pip install --no-cache-dir -r requirements.txt  
 
 # Set folders to be readable, writable, and executable  
-RUN sudo chown -R admin:admin /logo-server/home/admin/storage\
-    && sudo chmod -R 0777 /logo-server/home/admin/storage\
-    && sudo chown -R admin:admin /logo-server/home/admin/config \
-    && sudo chmod -R 0777 /logo-server/home/admin/config  
+RUN sudo chown -R admin:admin /home/admin/storage\
+    && sudo chmod -R 0777 /home/admin/storage\
+    && sudo chown -R admin:admin /home/admin/config \
+    && sudo chmod -R 0777 /home/admin/config  
 # Expose the port the app runs on if needed (optional)  
 # Make port 5055 available to the world outside this container  
 EXPOSE 5055  
