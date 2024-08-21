@@ -308,7 +308,7 @@ class MqttHandler:
                                                 logging.info(f"Failed to send message to topic {constants.MQTT_TOPIC}")  
                                             formatted_time = temp_time.strftime("%d%m%Y %I:%M%p").lower()  
                                             logging.info(f"Parcel is taken by {take_person_name} at {formatted_time}")  
-                                            self.insert_parcel_taken_event_data(event_data, out_image_path, video_path, take_person_name + " at " + str(formatted_time))  
+                                            self.insert_parcel_taken_event_data(event_data, out_image_path, video_path,  str(formatted_time), take_person_name)  
                                             MqttHandler.watch_status = False
                                             break  
                                         time.sleep(constants.SLEEP_INTERVAL)  
@@ -408,7 +408,7 @@ class MqttHandler:
                 logging.error(f"Error inserting event data: {e}")  
                 time.sleep(1)  
 
-    def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, taken_time):  
+    def insert_parcel_taken_event_data(self, event_data, out_image_path, video_path, taken_time, taken_name):  
         """  
         Inserts taken parcel event data into the local events database.  
         
@@ -425,8 +425,8 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "UPDATE event SET parcel_taken_time = ? WHERE id = ?",  
-                        (taken_time, event_data[0])  
+                        "UPDATE event SET parcel_taken_time = ? parcel_taken_name = ? WHERE id = ?",  
+                        (taken_time, taken_name, event_data[0])  
                     )
                     events_db_con.commit()  
                     break  
@@ -539,7 +539,8 @@ class MqttHandler:
                 thumbnail TEXT,  
                 sub_label TEXT,  
                 snapshot_path TEXT,  
-                video_path TEXT  
+                video_path TEXT,
+                parcel_taken_name TEXT  
             )  
         """)  
         
@@ -552,6 +553,9 @@ class MqttHandler:
             
         if 'parcel_taken_time' not in existing_columns:  
             cursor.execute("ALTER TABLE event ADD COLUMN parcel_taken_time TEXT")  
+        
+        if 'parcel_taken_name' not in existing_columns:  
+            cursor.execute("ALTER TABLE event ADD COLUMN parcel_taken_name TEXT")  
         
         # Commit the changes  
         connection.commit()  
