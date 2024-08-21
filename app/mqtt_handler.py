@@ -425,7 +425,7 @@ class MqttHandler:
                     self.setup_database(events_db_con)  
                     events_cursor = events_db_con.cursor()  
                     events_cursor.execute(  
-                        "UPDATE event SET parcel_taken_time = ? parcel_taken_name = ? WHERE id = ?",  
+                        "UPDATE event SET parcel_taken_time = ?, parcel_taken_name = ? WHERE id = ?",  
                         (taken_time, taken_name, event_data[0])  
                     )
                     events_db_con.commit()  
